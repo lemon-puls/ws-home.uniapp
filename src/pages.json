@@ -31,6 +31,18 @@
         "text": "首页"
       },
       {
+        "iconPath": "static/tabbar/home.png",
+        "selectedIconPath": "static/tabbar/homeHL.png",
+        "pagePath": "pages/upload/index",
+        "text": "上传"
+      },
+      {
+        "iconPath": "static/tabbar/home.png",
+        "selectedIconPath": "static/tabbar/homeHL.png",
+        "pagePath": "pages/stats/index",
+        "text": "统计"
+      },
+      {
         "iconPath": "static/tabbar/personal.png",
         "selectedIconPath": "static/tabbar/personalHL.png",
         "pagePath": "pages/mine/index",
@@ -48,6 +60,14 @@
       }
     },
     {
+      "path": "pages/album/detail",
+      "type": "page"
+    },
+    {
+      "path": "pages/album/index",
+      "type": "page"
+    },
+    {
       "path": "pages/login/index",
       "type": "page",
       "style": {
@@ -61,6 +81,14 @@
       "style": {
         "navigationBarTitleText": "我的"
       }
+    },
+    {
+      "path": "pages/stats/index",
+      "type": "page"
+    },
+    {
+      "path": "pages/upload/index",
+      "type": "page"
     },
     {
       "path": "pages/mine/about/index",
