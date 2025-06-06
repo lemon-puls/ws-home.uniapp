@@ -1,45 +1,70 @@
-import { CustomRequestOptions } from '@/interceptors/request'
+import type { RequestOptions } from '@/api/core/request'
 
-/**
- * 请求方法: 主要是对 uni.request 的封装，去适配 openapi-ts-request 的 request 方法
- * @param options 请求参数
- * @returns 返回 Promise 对象
- */
-const http = <T>(options: CustomRequestOptions) => {
-  // 1. 返回 Promise 对象
-  return new Promise<T>((resolve, reject) => {
+// 基础配置
+const baseConfig = {
+  baseURL: 'http://localhost:8080', // 替换为您的实际API地址
+  timeout: 10000,
+  header: {
+    'Content-Type': 'application/json',
+  },
+}
+
+// 请求拦截器
+const requestInterceptor = (config: RequestOptions) => {
+  // 获取token
+  const token = uni.getStorageSync('token')
+  if (token) {
+    config.header = {
+      ...config.header,
+      Authorization: `Bearer ${token}`,
+    }
+  }
+  return config
+}
+
+// 响应拦截器
+const responseInterceptor = (response: any) => {
+  if (response.statusCode === 200) {
+    return response.data
+  }
+
+  // 处理401错误
+  if (response.statusCode === 401) {
+    uni.removeStorageSync('token')
+    uni.showToast({
+      title: '登录已过期，请重新登录',
+      icon: 'none',
+    })
+    // 跳转到登录页
+    setTimeout(() => {
+      uni.navigateTo({
+        url: '/pages/login/index',
+      })
+    }, 1500)
+    return Promise.reject(new Error('登录已过期'))
+  }
+
+  return Promise.reject(response)
+}
+
+// 统一请求方法
+export const request = (options: RequestOptions) => {
+  const config = requestInterceptor({
+    ...baseConfig,
+    ...options,
+  })
+
+  return new Promise((resolve, reject) => {
     uni.request({
-      ...options,
-      dataType: 'json',
-      // #ifndef MP-WEIXIN
-      responseType: 'json',
-      // #endif
-      // 响应成功
-      success(res) {
-        // 状态码 2xx，参考 axios 的设计
-        if (res.statusCode >= 200 && res.statusCode < 300) {
-          // 2.1 提取核心数据 res.data
-          resolve(res.data as T)
-        } else if (res.statusCode === 401) {
-          // 401错误  -> 清理用户信息，跳转到登录页
-          // userStore.clearUserInfo()
-          // uni.navigateTo({ url: '/pages/login/login' })
-          reject(res)
-        } else {
-          // 其他错误 -> 根据后端错误信息轻提示
-          !options.hideErrorToast &&
-            uni.showToast({
-              icon: 'none',
-              title: (res.data as T & { msg?: string })?.msg || '请求错误',
-            })
-          reject(res)
-        }
+      ...config,
+      url: config.baseURL + config.url,
+      success: (res) => {
+        resolve(responseInterceptor(res))
       },
-      // 响应失败
-      fail(err) {
+      fail: (err) => {
         uni.showToast({
+          title: '网络请求失败',
           icon: 'none',
-          title: '网络错误，换个网络试试',
         })
         reject(err)
       },
@@ -47,30 +72,4 @@ const http = <T>(options: CustomRequestOptions) => {
   })
 }
 
-/*
- * openapi-ts-request 工具的 request 跨客户端适配方法
- */
-export default function request<T = unknown>(
-  url: string,
-  options: Omit<CustomRequestOptions, 'url'> & {
-    params?: Record<string, unknown>
-    headers?: Record<string, unknown>
-  },
-) {
-  const requestOptions = {
-    url,
-    ...options,
-  }
-
-  if (options.params) {
-    requestOptions.query = requestOptions.params
-    delete requestOptions.params
-  }
-
-  if (options.headers) {
-    requestOptions.header = options.headers
-    delete requestOptions.headers
-  }
-
-  return http<T>(requestOptions)
-}
+export default request

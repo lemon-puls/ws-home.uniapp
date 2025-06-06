@@ -59,6 +59,9 @@ importers:
       '@dcloudio/uni-quickapp-webview':
         specifier: 3.0.0-4060620250520001
         version: 3.0.0-4060620250520001(postcss@8.4.49)(rollup@4.41.1)(vue@3.5.15(typescript@5.7.2))
+      '@dcloudio/uni-ui':
+        specifier: ^1.5.7
+        version: 1.5.7
       '@tanstack/vue-query':
         specifier: ^5.62.16
         version: 5.62.16(vue@3.5.15(typescript@5.7.2))
@@ -1062,6 +1065,9 @@ packages:
 
   '@dcloudio/uni-stat@3.0.0-4060620250520001':
     resolution: {integrity: sha512-l2XREt2On5uf33PVrAdarncMmGqBLkgZdLsafqag8R2Kdw2Gg/JQQ66RsrLlfBHN2m9eXpfFW6MITqF2vYOoeA==}
+
+  '@dcloudio/uni-ui@1.5.7':
+    resolution: {integrity: sha512-DugxSIrQrze1FLdUOj9a+JEQ0bHGjnJTcGUK1mN/MivKg7nuKJBRWk5Ipa9sUdoBznX6ndz5h2e7Uao6x1CdCw==}
 
   '@dcloudio/vite-plugin-uni@3.0.0-4060620250520001':
     resolution: {integrity: sha512-U2UDgnEF6A2xQ2cqGnwaCZMCOk6hMQaJ/lmJoUAlst9ldy8c70T4oPTfzaJzBUQJioF0T+BRhF/HbKnrxICh4g==}
@@ -7243,6 +7249,8 @@ snapshots:
       - supports-color
       - ts-node
       - vue
+
+  '@dcloudio/uni-ui@1.5.7': {}
 
   '@dcloudio/vite-plugin-uni@3.0.0-4060620250520001(postcss@8.4.49)(rollup@4.41.1)(vite@6.3.5(@types/node@20.17.9)(jiti@2.4.2)(sass@1.77.8)(terser@5.36.0)(tsx@4.19.4)(yaml@2.6.1))(vue@3.5.15(typescript@5.7.2))':
     dependencies:

@@ -3,12 +3,11 @@
     <view class="header">
       <view class="title">我的相册</view>
       <view class="create-btn" @tap="handleCreateAlbum">
-        <text class="iconfont icon-add"></text>
-        <text>新建相册</text>
+        <wd-icon name="add" size="20px" color="#ffffff"></wd-icon>
       </view>
     </view>
 
-    <scroll-view scroll-y class="album-list">
+    <scroll-view scroll-y class="album-list" @refresherrefresh="onRefresh" refresher-enabled>
       <view class="album-grid">
         <view
           v-for="album in albums"
@@ -16,45 +15,103 @@
           class="album-item"
           @tap="handleAlbumClick(album)"
         >
-          <image
-            :src="album.coverUrl || '/static/default-cover.png'"
-            mode="aspectFill"
-            class="album-cover"
-          />
-          <view class="album-info">
-            <text class="album-title">{{ album.title }}</text>
-            <text class="album-desc">{{ album.description }}</text>
-            <view class="album-meta">
-              <text class="media-count">{{ album.mediaCount }}个文件</text>
-              <text class="update-time">{{ formatDate(album.updatedAt) }}</text>
+          <view class="album-cover-wrapper">
+            <image
+              :src="album.coverUrl || '/static/default-cover.png'"
+              mode="aspectFill"
+              class="album-cover"
+            />
+            <view class="album-stats">
+              <view class="stat-item">
+                <wd-icon name="image" size="14px" color="#ffffff"></wd-icon>
+                <text class="count">{{ album.photoCount }}</text>
+              </view>
+              <view class="stat-item">
+                <wd-icon name="video" size="14px" color="#ffffff"></wd-icon>
+                <text class="count">{{ album.videoCount }}</text>
+              </view>
             </view>
+          </view>
+          <view class="album-info">
+            <text class="album-title">{{ album.name }}</text>
+            <text class="album-desc" v-if="album.description">{{ album.description }}</text>
+            <text class="update-time">{{ formatDate(album.updatedAt) }}</text>
           </view>
         </view>
       </view>
     </scroll-view>
 
     <!-- 新建相册弹窗 -->
-    <uni-popup ref="createPopup" type="center">
-      <view class="create-popup">
-        <view class="popup-title">新建相册</view>
-        <input v-model="newAlbum.title" placeholder="请输入相册名称" class="input" />
-        <textarea v-model="newAlbum.description" placeholder="请输入相册描述" class="textarea" />
-        <view class="popup-btns">
-          <button @tap="handleCancel">取消</button>
-          <button @tap="handleConfirm" type="primary">确定</button>
+    <view v-if="showCreatePopup" class="popup-mask" @tap="handleCancel">
+      <view class="create-popup" @tap.stop>
+        <view class="popup-header">
+          <text class="popup-title">新建相册</text>
+          <wd-icon name="close" size="24px" color="#999999" @click="handleCancel"></wd-icon>
+        </view>
+        <view class="popup-content">
+          <view class="input-group">
+            <text class="input-label">相册名称</text>
+            <input v-model="newAlbum.title" placeholder="请输入相册名称" class="input" />
+          </view>
+          <view class="input-group">
+            <text class="input-label">相册描述</text>
+            <textarea
+              v-model="newAlbum.description"
+              placeholder="请输入相册描述（选填）"
+              class="textarea"
+            />
+          </view>
+        </view>
+        <view class="popup-footer">
+          <button class="cancel-btn" @tap="handleCancel">取消</button>
+          <button class="confirm-btn" @tap="handleConfirm">创建</button>
         </view>
       </view>
-    </uni-popup>
+    </view>
   </view>
 </template>
 
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import type { Album } from '@/types/album'
+import { Service } from '@/api/services/Service'
 import { formatDate } from '@/utils/date'
 
+interface Album {
+  id: number
+  name: string
+  description: string
+  coverUrl: string
+  mediaCount: number
+  updatedAt: string
+  photoCount: number
+  videoCount: number
+  totalSize: number
+  startTime: string
+}
+
+interface AlbumListResponse {
+  code: number
+  msg: string
+  data: {
+    total: number
+    page: number
+    limit: number
+    records: Array<{
+      id: number
+      name: string
+      description: string
+      cover_img: string
+      update_time: string
+      photo_count: number
+      video_count: number
+      total_size: number
+      start_time: string
+    }>
+  }
+}
+
 const albums = ref<Album[]>([])
-const createPopup = ref()
+const showCreatePopup = ref(false)
 const newAlbum = ref({
   title: '',
   description: '',
@@ -63,8 +120,25 @@ const newAlbum = ref({
 // 获取相册列表
 const fetchAlbums = async () => {
   try {
-    // TODO: 调用API获取相册列表
-    albums.value = []
+    const response = (await Service.getAlbumList({
+      page: 1,
+      limit: 20,
+    })) as unknown as AlbumListResponse
+
+    if (response?.code === 0 && response?.data?.records) {
+      albums.value = response.data.records.map((item) => ({
+        id: item.id,
+        name: item.name,
+        description: item.description || '',
+        coverUrl: item.cover_img || '',
+        mediaCount: (Number(item.photo_count) || 0) + (Number(item.video_count) || 0),
+        updatedAt: item.update_time,
+        photoCount: Number(item.photo_count) || 0,
+        videoCount: Number(item.video_count) || 0,
+        totalSize: Number(item.total_size) || 0,
+        startTime: item.start_time,
+      }))
+    }
   } catch (error) {
     uni.showToast({
       title: '获取相册列表失败',
@@ -79,7 +153,7 @@ const handleCreateAlbum = () => {
     title: '',
     description: '',
   }
-  createPopup.value.open()
+  showCreatePopup.value = true
 }
 
 // 确认创建
@@ -93,8 +167,17 @@ const handleConfirm = async () => {
   }
 
   try {
-    // TODO: 调用API创建相册
-    createPopup.value.close()
+    await Service.postAlbum({
+      body: {
+        name: newAlbum.value.title,
+        description: newAlbum.value.description,
+      },
+    })
+    uni.showToast({
+      title: '创建成功',
+      icon: 'success',
+    })
+    showCreatePopup.value = false
     fetchAlbums()
   } catch (error) {
     uni.showToast({
@@ -106,7 +189,7 @@ const handleConfirm = async () => {
 
 // 取消创建
 const handleCancel = () => {
-  createPopup.value.close()
+  showCreatePopup.value = false
 }
 
 // 点击相册
@@ -114,6 +197,12 @@ const handleAlbumClick = (album: Album) => {
   uni.navigateTo({
     url: `/pages/album/detail?id=${album.id}`,
   })
+}
+
+// 下拉刷新
+const onRefresh = async () => {
+  await fetchAlbums()
+  uni.stopPullDownRefresh()
 }
 
 onMounted(() => {
@@ -124,122 +213,262 @@ onMounted(() => {
 <style lang="scss">
 .album-page {
   min-height: 100vh;
-  background-color: #f5f5f5;
-  padding: 20rpx;
+  background-color: #f8f9fa;
+  padding: 30rpx;
 }
 
 .header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 30rpx;
+  margin-bottom: 40rpx;
+  padding: 0 10rpx;
 
   .title {
-    font-size: 36rpx;
-    font-weight: bold;
+    font-size: 40rpx;
+    font-weight: 600;
+    color: #333;
   }
 
   .create-btn {
+    width: 80rpx;
+    height: 80rpx;
     display: flex;
     align-items: center;
-    padding: 10rpx 20rpx;
-    background-color: #018d71;
+    justify-content: center;
+    background: linear-gradient(135deg, #018d71, #00b894);
     color: #fff;
-    border-radius: 8rpx;
+    border-radius: 50%;
+    box-shadow: 0 4rpx 12rpx rgba(1, 141, 113, 0.2);
+    transition: all 0.3s ease;
+
+    &:active {
+      transform: scale(0.95);
+    }
 
     .iconfont {
-      margin-right: 10rpx;
+      font-size: 40rpx;
     }
   }
 }
 
 .album-list {
-  height: calc(100vh - 120rpx);
+  height: calc(100vh - 140rpx);
 }
 
 .album-grid {
   display: grid;
   grid-template-columns: repeat(2, 1fr);
-  gap: 20rpx;
+  gap: 30rpx;
   padding-bottom: 40rpx;
 }
 
 .album-item {
   background-color: #fff;
-  border-radius: 12rpx;
+  border-radius: 16rpx;
   overflow: hidden;
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
+  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  transition: all 0.3s ease;
+
+  &:active {
+    transform: scale(0.98);
+  }
 }
 
-.album-cover {
+.album-cover-wrapper {
+  position: relative;
   width: 100%;
-  height: 300rpx;
+  height: 360rpx;
+  overflow: hidden;
+
+  .album-cover {
+    width: 100%;
+    height: 100%;
+    transition: transform 0.3s ease;
+  }
+
+  .album-stats {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    padding: 20rpx;
+    background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+    color: #fff;
+    font-size: 24rpx;
+    display: flex;
+    gap: 20rpx;
+
+    .stat-item {
+      display: flex;
+      align-items: center;
+      gap: 8rpx;
+      background: rgba(0, 0, 0, 0.3);
+      padding: 6rpx 12rpx;
+      border-radius: 20rpx;
+
+      .iconfont {
+        font-size: 28rpx;
+      }
+
+      .count {
+        font-size: 24rpx;
+      }
+    }
+  }
 }
 
 .album-info {
-  padding: 20rpx;
+  padding: 24rpx;
 
   .album-title {
-    font-size: 28rpx;
-    font-weight: bold;
-    margin-bottom: 10rpx;
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #333;
+    margin-bottom: 12rpx;
+    @extend .ellipsis-1 !optional;
   }
 
   .album-desc {
-    font-size: 24rpx;
+    font-size: 26rpx;
     color: #666;
-    margin-bottom: 10rpx;
+    margin-bottom: 16rpx;
     @extend .ellipsis-2 !optional;
   }
 
-  .album-meta {
-    display: flex;
-    justify-content: space-between;
-    font-size: 22rpx;
+  .update-time {
+    font-size: 24rpx;
     color: #999;
-
-    .media-count {
-      margin-right: 20rpx;
-    }
   }
+}
+
+.popup-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
 }
 
 .create-popup {
   background-color: #fff;
-  border-radius: 12rpx;
-  padding: 30rpx;
-  width: 600rpx;
+  border-radius: 24rpx;
+  width: 680rpx;
+  overflow: hidden;
+  animation: popup-in 0.3s ease;
 
-  .popup-title {
-    font-size: 32rpx;
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 30rpx;
-  }
-
-  .input {
-    border: 1rpx solid #eee;
-    border-radius: 8rpx;
-    padding: 20rpx;
-    margin-bottom: 20rpx;
-  }
-
-  .textarea {
-    border: 1rpx solid #eee;
-    border-radius: 8rpx;
-    padding: 20rpx;
-    height: 200rpx;
-    margin-bottom: 30rpx;
-  }
-
-  .popup-btns {
-    display: flex;
-    justify-content: space-between;
-
-    button {
-      width: 45%;
-      margin: 0;
+  @keyframes popup-in {
+    from {
+      transform: scale(0.8);
+      opacity: 0;
+    }
+    to {
+      transform: scale(1);
+      opacity: 1;
     }
   }
+
+  .popup-header {
+    padding: 30rpx;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    border-bottom: 1rpx solid #eee;
+
+    .popup-title {
+      font-size: 36rpx;
+      font-weight: 600;
+      color: #333;
+    }
+
+    .popup-close {
+      font-size: 48rpx;
+      color: #999;
+      padding: 0 20rpx;
+    }
+  }
+
+  .popup-content {
+    padding: 30rpx;
+
+    .input-group {
+      margin-bottom: 30rpx;
+
+      .input-label {
+        font-size: 28rpx;
+        color: #333;
+        margin-bottom: 16rpx;
+        display: block;
+      }
+
+      .input {
+        width: 100%;
+        height: 88rpx;
+        background: #f8f9fa;
+        border-radius: 12rpx;
+        padding: 0 24rpx;
+        font-size: 28rpx;
+        color: #333;
+      }
+
+      .textarea {
+        width: 100%;
+        height: 200rpx;
+        background: #f8f9fa;
+        border-radius: 12rpx;
+        padding: 24rpx;
+        font-size: 28rpx;
+        color: #333;
+      }
+    }
+  }
+
+  .popup-footer {
+    padding: 30rpx;
+    display: flex;
+    gap: 20rpx;
+    border-top: 1rpx solid #eee;
+
+    button {
+      flex: 1;
+      height: 88rpx;
+      border-radius: 12rpx;
+      font-size: 32rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      margin: 0;
+    }
+
+    .cancel-btn {
+      background: #f8f9fa;
+      color: #666;
+    }
+
+    .confirm-btn {
+      background: linear-gradient(135deg, #018d71, #00b894);
+      color: #fff;
+    }
+  }
+}
+
+// 工具类
+.ellipsis-1 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.ellipsis-2 {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
 }
 </style>

@@ -14,7 +14,18 @@ import type { dto_UpdateUserDTO } from '../models/dto_UpdateUserDTO'
 import type { vo_GetPresignedURLVO } from '../models/vo_GetPresignedURLVO'
 import type { CancelablePromise } from '../core/CancelablePromise'
 import { OpenAPI } from '../core/OpenAPI'
-import { request as __request } from '../core/request'
+import { request } from '../core/request'
+
+// 配置 OpenAPI
+OpenAPI.BASE = 'http://localhost:8080/api'
+OpenAPI.WITH_CREDENTIALS = false
+OpenAPI.CREDENTIALS = 'include'
+OpenAPI.TOKEN = undefined
+OpenAPI.USERNAME = undefined
+OpenAPI.PASSWORD = undefined
+OpenAPI.HEADERS = undefined
+OpenAPI.ENCODE_PATH = undefined
+
 export class Service {
   /**
    * 添加相册
@@ -30,7 +41,7 @@ export class Service {
      */
     body: dto_AlbumAddDTO
   }): CancelablePromise<void> {
-    return __request(OpenAPI, {
+    return request(OpenAPI, {
       method: 'POST',
       url: '/album',
       body: body,
@@ -75,7 +86,7 @@ export class Service {
      */
     name?: string
   }): CancelablePromise<void> {
-    return __request(OpenAPI, {
+    return request(OpenAPI, {
       method: 'GET',
       url: '/album/list',
       query: {
@@ -102,7 +113,7 @@ export class Service {
      */
     body: dto_AddMediaToAlbumDTO
   }): CancelablePromise<void> {
-    return __request(OpenAPI, {
+    return request(OpenAPI, {
       method: 'POST',
       url: '/album/media',
       body: body,
@@ -122,7 +133,7 @@ export class Service {
      */
     ids: string
   }): CancelablePromise<void> {
-    return __request(OpenAPI, {
+    return request(OpenAPI, {
       method: 'DELETE',
       url: '/album/media',
       query: {
@@ -144,7 +155,7 @@ export class Service {
      */
     body: dto_CursorListAlbumMediaDTO
   }): CancelablePromise<void> {
-    return __request(OpenAPI, {
+    return request(OpenAPI, {
       method: 'POST',
       url: '/album/media/list',
       body: body,
@@ -157,7 +168,7 @@ export class Service {
    * @throws ApiError
    */
   public static postAlbumMediaSize(): CancelablePromise<void> {
-    return __request(OpenAPI, {
+    return request(OpenAPI, {
       method: 'POST',
       url: '/album/media/size',
     })
@@ -169,7 +180,7 @@ export class Service {
    * @throws ApiError
    */
   public static getAlbumStats(): CancelablePromise<void> {
-    return __request(OpenAPI, {
+    return request(OpenAPI, {
       method: 'GET',
       url: '/album/stats',
     })
@@ -188,7 +199,7 @@ export class Service {
      */
     id: string
   }): CancelablePromise<void> {
-    return __request(OpenAPI, {
+    return request(OpenAPI, {
       method: 'GET',
       url: '/album/{id}',
       path: {
@@ -210,7 +221,7 @@ export class Service {
      */
     id: string
   }): CancelablePromise<void> {
-    return __request(OpenAPI, {
+    return request(OpenAPI, {
       method: 'DELETE',
       url: '/album/{id}',
       path: {
@@ -232,7 +243,7 @@ export class Service {
      */
     data: dto_BatchDeleteObjectsReq
   }): CancelablePromise<common_Response> {
-    return __request(OpenAPI, {
+    return request(OpenAPI, {
       method: 'POST',
       url: '/cos/batch-delete',
       body: data,
@@ -256,7 +267,7 @@ export class Service {
       data?: vo_GetPresignedURLVO
     }
   > {
-    return __request(OpenAPI, {
+    return request(OpenAPI, {
       method: 'POST',
       url: '/cos/presigned-url',
       body: data,
@@ -276,7 +287,7 @@ export class Service {
      */
     body: dto_UpdateUserDTO
   }): CancelablePromise<void> {
-    return __request(OpenAPI, {
+    return request(OpenAPI, {
       method: 'PUT',
       url: '/user',
       body: body,
@@ -289,7 +300,7 @@ export class Service {
    * @throws ApiError
    */
   public static getUserCurrent(): CancelablePromise<void> {
-    return __request(OpenAPI, {
+    return request(OpenAPI, {
       method: 'GET',
       url: '/user/current',
     })
@@ -308,7 +319,7 @@ export class Service {
      */
     body: dto_LoginDTO
   }): CancelablePromise<void> {
-    return __request(OpenAPI, {
+    return request(OpenAPI, {
       method: 'POST',
       url: '/user/login',
       body: body,
@@ -328,7 +339,7 @@ export class Service {
      */
     userId: string
   }): CancelablePromise<void> {
-    return __request(OpenAPI, {
+    return request(OpenAPI, {
       method: 'GET',
       url: '/user/one',
       query: {
@@ -350,7 +361,7 @@ export class Service {
      */
     authorization: string
   }): CancelablePromise<void> {
-    return __request(OpenAPI, {
+    return request(OpenAPI, {
       method: 'POST',
       url: '/user/refresh',
       headers: {
@@ -372,7 +383,7 @@ export class Service {
      */
     body: dto_RegisterDTO
   }): CancelablePromise<void> {
-    return __request(OpenAPI, {
+    return request(OpenAPI, {
       method: 'POST',
       url: '/user/register',
       body: body,
