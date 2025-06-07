@@ -56,3 +56,9 @@ export const getRelativeTime = (date: Date | number | string): string => {
     return `${Math.floor(diff / year)}年前`
   }
 }
+
+export const formatDateSimple = (date: string | number | Date): string => {
+  if (!date) return ''
+  const d = new Date(date)
+  return `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`
+}
