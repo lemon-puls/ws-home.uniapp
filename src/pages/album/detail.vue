@@ -116,8 +116,6 @@
                 show-center-play-btn
                 show-play-btn
                 controls
-                muted
-                loop
                 :initial-time="0"
                 enable-progress-gesture
                 show-fullscreen-btn

@@ -6,14 +6,18 @@
         :src="videoUrl"
         class="video"
         controls
-        autoplay
+        :poster="videoUrl"
+        width="100%"
+        height="100%"
+        object-fit="cover"
+        playsinline
+        x5-video-player-type="h5"
+        custom-cache="false"
         show-center-play-btn
-        show-fullscreen-btn
         show-play-btn
         show-progress
-        object-fit="contain"
-        enable-progress-gesture
         enable-play-gesture
+        show-fullscreen-btn
         show-mute-btn
         @error="handleError"
         @play="handlePlay"
@@ -27,7 +31,7 @@
 <script setup lang="ts">
 console.log('视频播放页面组件加载')
 import { ref, onMounted, onUnmounted } from 'vue'
-import { onLoad } from '@dcloudio/uni-app'
+import { onLoad, onShow, onHide } from '@dcloudio/uni-app'
 
 const videoUrl = ref('')
 const videoContext = ref<any>(null)
@@ -46,22 +50,40 @@ onLoad((options) => {
   }
 })
 
-onMounted(() => {
-  // 获取视频上下文
-  videoContext.value = uni.createVideoContext('myVideo')
-  console.log('视频上下文:', videoContext.value)
+onShow(() => {
+  if (!videoContext.value) {
+    videoContext.value = uni.createVideoContext('myVideo')
+    console.log('onShow中获取视频上下文:', videoContext.value)
+  }
+  if (videoUrl.value && videoContext.value) {
+    // 确保src已设置，并延迟播放以提高兼容性
+    // videoContext.value.src = videoUrl.value; // 如果:src绑定有效，此处不需要显式设置
+    setTimeout(() => {
+      videoContext.value.play()
+      console.log('onShow中显式调用 videoContext.play() in setTimeout')
+    }, 100) // 100毫秒延时
+  }
+})
+
+onHide(() => {
+  // 页面隐藏时暂停播放
+  if (videoContext.value) {
+    videoContext.value.pause()
+    console.log('onHide中调用 videoContext.pause()')
+  }
 })
 
 onUnmounted(() => {
   // 页面卸载时停止播放
   if (videoContext.value) {
     videoContext.value.stop()
+    console.log('onUnmounted中调用 videoContext.stop()')
   }
 })
 
 // 错误处理
 const handleError = (err: any) => {
-  console.error('视频播放错误:', err)
+  console.error('视频播放错误:', err.detail)
   uni.showToast({
     title: '视频播放失败',
     icon: 'none',
@@ -91,16 +113,16 @@ const handleEnded = () => {
   width: 100vw;
   height: 100vh;
   background-color: #000000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
+  // display: flex;
+  // align-items: center;
+  // justify-content: center;
 
   .video-container {
     width: 100%;
     height: 100%;
-    display: flex;
-    align-items: center;
-    justify-content: center;
+    // display: flex;
+    // align-items: center;
+    // justify-content: center;
   }
 
   .video {
