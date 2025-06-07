@@ -91,6 +91,10 @@
       "type": "page"
     },
     {
+      "path": "pages/video/player",
+      "type": "page"
+    },
+    {
       "path": "pages/mine/about/index",
       "type": "page",
       "style": {

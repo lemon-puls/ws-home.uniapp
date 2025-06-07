@@ -104,12 +104,31 @@
             :key="media.id"
             class="media-item"
             :class="{ selected: selectedImages.includes(media.id) }"
-            @tap="handleMediaClick(media)"
+            @tap="() => handleMediaClick(media)"
           >
             <image v-if="media.type === 0" :src="media.url" mode="aspectFill" class="media-image" />
-            <video v-else :src="media.url" class="media-video" :poster="media.meta?.poster" />
-            <view class="media-type" v-if="media.type === 1">
-              <wd-icon name="video" size="14px" color="#ffffff"></wd-icon>
+            <view v-else class="media-video-container">
+              <video
+                :src="media.url"
+                class="media-video"
+                :poster="media.url"
+                object-fit="cover"
+                show-center-play-btn
+                show-play-btn
+                controls
+                muted
+                loop
+                :initial-time="0"
+                enable-progress-gesture
+                show-fullscreen-btn
+                show-progress
+                enable-play-gesture
+                show-mute-btn
+                title="视频"
+              ></video>
+              <view class="media-type">
+                <wd-icon name="video" size="14px" color="#ffffff"></wd-icon>
+              </view>
             </view>
           </view>
         </view>
@@ -125,6 +144,8 @@ import { ref, onMounted } from 'vue'
 import { Service } from '@/api/services/Service'
 import { onLoad } from '@dcloudio/uni-app'
 import { formatDate, formatDateSimple } from '@/utils/date'
+import type { dto_AlbumMediaAddDTO } from '@/api/models/dto_AlbumMediaAddDTO'
+import type { dto_MediaMetaDTO } from '@/api/models/dto_MediaMetaDTO'
 
 interface ApiResponse<T> {
   code: number
@@ -233,11 +254,7 @@ const fetchMediaList = async (isLoadMore = false) => {
         pageSize: 20,
         type: filterType.value === 'image' ? 0 : filterType.value === 'video' ? 1 : undefined,
       },
-    })) as unknown as ApiResponse<{
-      data: MediaItem[]
-      cursor: string
-      isLast: boolean
-    }>
+    })) as unknown as ApiResponse<{ data: MediaItem[]; cursor: string; isLast: boolean }>
 
     if (response?.code === 0) {
       const { data, cursor: newCursor, isLast } = response.data
@@ -246,6 +263,7 @@ const fetchMediaList = async (isLoadMore = false) => {
       } else {
         mediaList.value = data
       }
+      console.log('媒体列表数据:', JSON.parse(JSON.stringify(mediaList.value)))
       cursor.value = newCursor
       noMore.value = isLast
     }
@@ -282,6 +300,10 @@ const toggleEdit = () => {
 
 // 处理媒体点击
 const handleMediaClick = (media: MediaItem) => {
+  console.log('handleMediaClick 触发, 媒体对象:', JSON.parse(JSON.stringify(media)))
+  console.log('媒体类型:', media.type)
+  console.log('媒体URL:', media.url)
+
   if (isEditing.value) {
     const index = selectedImages.value.indexOf(media.id)
     if (index > -1) {
@@ -290,7 +312,44 @@ const handleMediaClick = (media: MediaItem) => {
       selectedImages.value.push(media.id)
     }
   } else {
-    // TODO: 实现媒体预览
+    // 实现媒体预览
+    if (media.type === 0) {
+      // 图片预览
+      const imageList = mediaList.value.filter((item) => item.type === 0).map((item) => item.url)
+      const currentIndex = imageList.findIndex((url) => url === media.url)
+
+      uni.previewImage({
+        urls: imageList,
+        current: currentIndex,
+        success: () => {
+          console.log('预览成功')
+        },
+        fail: (err) => {
+          console.error('预览失败:', err)
+          uni.showToast({
+            title: '预览失败',
+            icon: 'none',
+          })
+        },
+      })
+    } else {
+      // 视频预览
+      console.log('准备跳转到视频播放页，视频URL:', media.url)
+      uni.navigateTo({
+        url: `/pages/video/player?url=${encodeURIComponent(media.url)}`,
+        success: () => {
+          console.log('打开视频播放器成功')
+        },
+        fail: (err) => {
+          console.error('打开视频播放器失败:', err)
+          uni.showToast({
+            title: '打开视频失败',
+            icon: 'none',
+          })
+        },
+      })
+      console.log('uni.navigateTo 调用已执行')
+    }
   }
 }
 
@@ -432,11 +491,20 @@ const handleUpload = async () => {
 
         console.log('downloadRes:', downloadRes)
 
+        const mediaType = file.fileType === 'image' ? 0 : 1 // 0 for image, 1 for video
+        const mediaMeta: dto_MediaMetaDTO = {}
+        // 小程序 chooseMedia 返回的 tempFiles[i].thumbTempFilePath 仅视频有此属性
+        // if (mediaType === 1 && file.thumbTempFilePath) {
+        //   mediaMeta.poster = file.thumbTempFilePath;
+        // }
+
         return {
           url: downloadRes.data.url,
           size: file.size,
+          type: mediaType,
           is_raw: false,
-        }
+          meta: mediaMeta,
+        } as dto_AlbumMediaAddDTO
       } catch (error) {
         console.error('单个文件上传失败:', error)
         throw error
@@ -713,6 +781,14 @@ const handleUpload = async () => {
           width: 100%;
           height: 100%;
           object-fit: cover;
+          background-color: #000000;
+        }
+
+        .media-video-container {
+          width: 100%;
+          height: 100%;
+          position: relative;
+          background-color: #000000;
         }
 
         .media-type {
@@ -725,10 +801,7 @@ const handleUpload = async () => {
           display: flex;
           align-items: center;
           gap: 4rpx;
-
-          .el-icon {
-            font-size: 24rpx;
-          }
+          z-index: 2;
         }
       }
     }
