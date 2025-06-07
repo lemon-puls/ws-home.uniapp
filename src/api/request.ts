@@ -1,11 +1,17 @@
-import type { OpenAPIConfig } from './generated/core/OpenAPI'
+import type { ApiRequestOptions } from './core/ApiRequestOptions'
 
-export const request: OpenAPIConfig['request'] = async (options) => {
-  const { url, method, headers, body, params } = options
+export const request = async (options: ApiRequestOptions) => {
+  const { url, method, headers, body, query } = options
+
+  // 合并请求头
+  const mergedHeaders = {
+    ...globalHeaders,
+    ...headers,
+  }
 
   // 构建完整的 URL（包含查询参数）
-  const queryString = params
-    ? `?${new URLSearchParams(params as Record<string, string>).toString()}`
+  const queryString = query
+    ? `?${new URLSearchParams(query as Record<string, string>).toString()}`
     : ''
   const fullUrl = `${url}${queryString}`
 
@@ -13,7 +19,7 @@ export const request: OpenAPIConfig['request'] = async (options) => {
   const response = await uni.request({
     url: fullUrl,
     method: method as any,
-    header: headers as any,
+    header: mergedHeaders as any,
     data: body,
   })
 
@@ -23,5 +29,6 @@ export const request: OpenAPIConfig['request'] = async (options) => {
   }
 
   // 处理错误
-  throw new Error(response.data?.message || '请求失败')
+  const errorData = response.data as any
+  throw new Error(errorData?.message || '请求失败')
 }

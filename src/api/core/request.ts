@@ -180,12 +180,25 @@ export const sendRequest = async <T>(
   onCancel: OnCancel,
 ): Promise<{ status: number; statusText: string; data: T; headers: Record<string, string> }> => {
   return new Promise((resolve, reject) => {
+    console.log('Request config:', {
+      url,
+      method: options.method,
+      headers,
+      body,
+    })
+
     const requestTask = uni.request({
       url,
       data: body,
-      header: headers,
+      header: {
+        'Content-Type': 'application/json',
+        Authorization:
+          'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo2MDY5NTc0MzQwNDg1MTIsImlzcyI6Im5vdm8iLCJleHAiOjE3NDkyNjg5NjQsIm5iZiI6MTc0OTI2NzE2NCwiaWF0IjoxNzQ5MjY3MTY0fQ.-T7lL90qfpGuNHD3bDCgmz8h5pUPjagzltJb0DLFJGQ',
+        ...headers,
+      },
       method: options.method as any,
       success: (res) => {
+        console.log('Response headers:', res.header)
         resolve({
           status: res.statusCode,
           statusText: res.errMsg,
@@ -194,6 +207,7 @@ export const sendRequest = async <T>(
         })
       },
       fail: (err) => {
+        console.error('Request failed:', err)
         reject(err)
       },
     })

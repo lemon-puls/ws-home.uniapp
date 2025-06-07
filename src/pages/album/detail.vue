@@ -1,313 +1,248 @@
 <template>
   <view class="album-detail">
-    <view class="header">
-      <view class="album-info">
-        <image
-          :src="album.coverUrl || '/static/default-cover.png'"
-          mode="aspectFill"
-          class="cover"
-        />
-        <view class="info">
-          <text class="title">{{ album.title }}</text>
-          <text class="desc">{{ album.description }}</text>
-          <view class="meta">
-            <text class="count">{{ album.mediaCount }}个文件</text>
-            <text class="time">更新于 {{ formatDate(album.updatedAt) }}</text>
+    <!-- 相册信息 -->
+    <view class="album-info">
+      <image :src="albumInfo.cover_img" mode="aspectFill" class="cover-image" />
+      <view class="info-content">
+        <text class="album-name">{{ albumInfo.name }}</text>
+        <text class="album-desc" v-if="albumInfo.description">{{ albumInfo.description }}</text>
+        <view class="album-stats">
+          <view class="stat-item">
+            <wd-icon name="image" size="14px" color="#666"></wd-icon>
+            <text class="count">{{ albumInfo.photo_count }}</text>
+          </view>
+          <view class="stat-item">
+            <wd-icon name="video" size="14px" color="#666"></wd-icon>
+            <text class="count">{{ albumInfo.video_count }}</text>
           </view>
         </view>
       </view>
-      <view class="actions">
-        <button class="action-btn" @tap="handleEdit">
-          <text class="iconfont icon-edit"></text>
-          <text>编辑</text>
-        </button>
-        <button class="action-btn" @tap="handleUpload">
-          <text class="iconfont icon-upload"></text>
-          <text>上传</text>
-        </button>
-      </view>
     </view>
 
-    <view class="filter-bar">
-      <view
-        class="filter-item"
-        :class="{ active: currentType === 'all' }"
-        @tap="handleTypeFilter('all')"
-      >
-        全部
-      </view>
-      <view
-        class="filter-item"
-        :class="{ active: currentType === 'image' }"
-        @tap="handleTypeFilter('image')"
-      >
-        图片
-      </view>
-      <view
-        class="filter-item"
-        :class="{ active: currentType === 'video' }"
-        @tap="handleTypeFilter('video')"
-      >
-        视频
-      </view>
-    </view>
-
-    <scroll-view scroll-y class="media-list">
+    <!-- 媒体列表 -->
+    <scroll-view
+      scroll-y
+      class="media-list"
+      @scrolltolower="loadMore"
+      refresher-enabled
+      @refresherrefresh="onRefresh"
+    >
       <view class="media-grid">
         <view
-          v-for="media in filteredMedia"
+          v-for="media in mediaList"
           :key="media.id"
           class="media-item"
           @tap="handleMediaClick(media)"
         >
-          <image
-            v-if="media.type === 'image'"
-            :src="media.url"
-            mode="aspectFill"
-            class="media-preview"
-          />
-          <video v-else :src="media.url" class="media-preview" />
-          <view class="media-info">
-            <text class="size">{{ formatSize(media.size) }}</text>
-            <text v-if="media.compressed" class="compressed">已压缩</text>
+          <image v-if="media.type === 0" :src="media.url" mode="aspectFill" class="media-image" />
+          <video v-else :src="media.url" class="media-video" :poster="media.meta?.poster" />
+          <view class="media-type" v-if="media.type === 1">
+            <wd-icon name="video" size="14px" color="#ffffff"></wd-icon>
           </view>
         </view>
       </view>
+      <view class="loading" v-if="loading">加载中...</view>
+      <view class="no-more" v-if="noMore">没有更多了</view>
     </scroll-view>
-
-    <!-- 编辑相册弹窗 -->
-    <uni-popup ref="editPopup" type="center">
-      <view class="edit-popup">
-        <view class="popup-title">编辑相册</view>
-        <input v-model="editForm.title" placeholder="请输入相册名称" class="input" />
-        <textarea v-model="editForm.description" placeholder="请输入相册描述" class="textarea" />
-        <view class="popup-btns">
-          <button @tap="handleEditCancel">取消</button>
-          <button @tap="handleEditConfirm" type="primary">确定</button>
-        </view>
-      </view>
-    </uni-popup>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, onMounted } from 'vue'
-import type { Album, MediaFile } from '@/types/album'
-import { formatDate } from '@/utils/date'
-import { formatSize } from '@/utils/format'
+import { ref, onMounted } from 'vue'
+import { Service } from '@/api/services/Service'
+import { onLoad } from '@dcloudio/uni-app'
 
-const album = ref<Album>({
-  id: '',
-  title: '',
-  description: '',
-  coverUrl: '',
-  mediaCount: 0,
-  createdAt: '',
-  updatedAt: '',
-})
+interface ApiResponse<T> {
+  code: number
+  msg: string
+  data: T
+}
 
-const mediaList = ref<MediaFile[]>([])
-const currentType = ref<'all' | 'image' | 'video'>('all')
-const editPopup = ref()
-const editForm = ref({
-  title: '',
-  description: '',
-})
+interface AlbumInfo {
+  id: number
+  name: string
+  description: string
+  cover_img: string
+  photo_count: number
+  video_count: number
+  total_size: number
+  create_time: string
+  update_time: string
+  start_time: string
+  user: {
+    id: number
+    userName: string
+    avatar: string
+  }
+}
 
-// 过滤后的媒体列表
-const filteredMedia = computed(() => {
-  if (currentType.value === 'all') return mediaList.value
-  return mediaList.value.filter((media) => media.type === currentType.value)
+interface MediaItem {
+  id: number
+  url: string
+  type: number // 0: 图片, 1: 视频
+  size: number
+  create_time: string
+  meta?: {
+    poster?: string
+  }
+}
+
+const albumId = ref<number>(0)
+const albumInfo = ref<AlbumInfo>({} as AlbumInfo)
+const mediaList = ref<MediaItem[]>([])
+const cursor = ref<string>('')
+const loading = ref(false)
+const noMore = ref(false)
+
+// 获取页面参数
+onLoad((options) => {
+  if (options.id) {
+    albumId.value = Number(options.id)
+    console.log('albumId:', albumId.value)
+    fetchAlbumInfo()
+    fetchMediaList()
+  } else {
+    uni.showToast({
+      title: '相册ID不存在',
+      icon: 'none',
+    })
+  }
 })
 
 // 获取相册详情
-const fetchAlbumDetail = async (id: string) => {
+const fetchAlbumInfo = async () => {
   try {
-    // TODO: 调用API获取相册详情
+    const response = (await Service.getAlbum({
+      id: albumId.value.toString(),
+    })) as unknown as ApiResponse<AlbumInfo>
+
+    if (response?.code === 0) {
+      albumInfo.value = response.data
+    }
   } catch (error) {
     uni.showToast({
-      title: '获取相册详情失败',
+      title: '获取相册信息失败',
       icon: 'none',
     })
   }
 }
 
 // 获取媒体列表
-const fetchMediaList = async (albumId: string) => {
+const fetchMediaList = async (isLoadMore = false) => {
+  if (loading.value || (noMore.value && isLoadMore)) return
+
+  loading.value = true
   try {
-    // TODO: 调用API获取媒体列表
+    const response = (await Service.postAlbumMediaList({
+      body: {
+        album_id: albumId.value,
+        cursor: isLoadMore ? cursor.value : '',
+        is_raw: false,
+        pageSize: 20,
+      },
+    })) as unknown as ApiResponse<{
+      data: MediaItem[]
+      cursor: string
+      isLast: boolean
+    }>
+
+    if (response?.code === 0) {
+      const { data, cursor: newCursor, isLast } = response.data
+      if (isLoadMore) {
+        mediaList.value.push(...data)
+      } else {
+        mediaList.value = data
+      }
+      cursor.value = newCursor
+      noMore.value = isLast
+    }
   } catch (error) {
     uni.showToast({
       title: '获取媒体列表失败',
       icon: 'none',
     })
+  } finally {
+    loading.value = false
   }
 }
 
-// 类型筛选
-const handleTypeFilter = (type: 'all' | 'image' | 'video') => {
-  currentType.value = type
+// 加载更多
+const loadMore = () => {
+  fetchMediaList(true)
 }
 
-// 编辑相册
-const handleEdit = () => {
-  editForm.value = {
-    title: album.value.title,
-    description: album.value.description,
-  }
-  editPopup.value.open()
-}
-
-// 确认编辑
-const handleEditConfirm = async () => {
-  if (!editForm.value.title) {
-    uni.showToast({
-      title: '请输入相册名称',
-      icon: 'none',
-    })
-    return
-  }
-
-  try {
-    // TODO: 调用API更新相册
-    editPopup.value.close()
-    fetchAlbumDetail(album.value.id)
-  } catch (error) {
-    uni.showToast({
-      title: '更新相册失败',
-      icon: 'none',
-    })
-  }
-}
-
-// 取消编辑
-const handleEditCancel = () => {
-  editPopup.value.close()
-}
-
-// 上传媒体
-const handleUpload = () => {
-  uni.navigateTo({
-    url: `/pages/upload/index?albumId=${album.value.id}`,
-  })
+// 下拉刷新
+const onRefresh = async () => {
+  noMore.value = false
+  cursor.value = ''
+  await Promise.all([fetchAlbumInfo(), fetchMediaList()])
+  uni.stopPullDownRefresh()
 }
 
 // 点击媒体
-const handleMediaClick = (media: MediaFile) => {
-  if (media.type === 'image') {
-    uni.previewImage({
-      urls: [media.url],
-    })
-  } else {
-    uni.navigateTo({
-      url: `/pages/media/player?url=${encodeURIComponent(media.url)}`,
-    })
-  }
+const handleMediaClick = (media: MediaItem) => {
+  // TODO: 实现媒体预览
 }
-
-onMounted(() => {
-  const pages = getCurrentPages()
-  const currentPage = pages[pages.length - 1]
-  const albumId = currentPage.$page?.options?.id
-
-  if (albumId) {
-    fetchAlbumDetail(albumId)
-    fetchMediaList(albumId)
-  }
-})
 </script>
 
 <style lang="scss">
 .album-detail {
   min-height: 100vh;
-  background-color: #f5f5f5;
+  background-color: #f8f9fa;
 }
 
-.header {
+.album-info {
   background-color: #fff;
   padding: 30rpx;
   margin-bottom: 20rpx;
 
-  .album-info {
-    display: flex;
-    margin-bottom: 30rpx;
+  .cover-image {
+    width: 100%;
+    height: 400rpx;
+    border-radius: 16rpx;
+    margin-bottom: 24rpx;
+  }
 
-    .cover {
-      width: 200rpx;
-      height: 200rpx;
-      border-radius: 12rpx;
-      margin-right: 30rpx;
+  .info-content {
+    .album-name {
+      font-size: 36rpx;
+      font-weight: 600;
+      color: #333;
+      margin-bottom: 16rpx;
+      display: block;
     }
 
-    .info {
-      flex: 1;
+    .album-desc {
+      font-size: 28rpx;
+      color: #666;
+      margin-bottom: 24rpx;
+      display: block;
+    }
 
-      .title {
-        font-size: 32rpx;
-        font-weight: bold;
-        margin-bottom: 10rpx;
-      }
+    .album-stats {
+      display: flex;
+      gap: 24rpx;
 
-      .desc {
-        font-size: 26rpx;
-        color: #666;
-        margin-bottom: 20rpx;
-      }
-
-      .meta {
-        font-size: 24rpx;
-        color: #999;
+      .stat-item {
+        display: flex;
+        align-items: center;
+        gap: 8rpx;
+        background: #f8f9fa;
+        padding: 8rpx 16rpx;
+        border-radius: 24rpx;
 
         .count {
-          margin-right: 20rpx;
+          font-size: 24rpx;
+          color: #666;
         }
       }
-    }
-  }
-
-  .actions {
-    display: flex;
-    justify-content: flex-end;
-    gap: 20rpx;
-
-    .action-btn {
-      display: flex;
-      align-items: center;
-      padding: 10rpx 20rpx;
-      background-color: #f5f5f5;
-      border-radius: 8rpx;
-      font-size: 26rpx;
-
-      .iconfont {
-        margin-right: 10rpx;
-      }
-    }
-  }
-}
-
-.filter-bar {
-  display: flex;
-  background-color: #fff;
-  padding: 20rpx 30rpx;
-  margin-bottom: 20rpx;
-
-  .filter-item {
-    padding: 10rpx 30rpx;
-    font-size: 26rpx;
-    color: #666;
-    border-radius: 30rpx;
-    margin-right: 20rpx;
-
-    &.active {
-      background-color: #018d71;
-      color: #fff;
     }
   }
 }
 
 .media-list {
-  height: calc(100vh - 400rpx);
-  padding: 0 20rpx;
+  height: calc(100vh - 600rpx);
+  padding: 0 30rpx;
 }
 
 .media-grid {
@@ -319,70 +254,37 @@ onMounted(() => {
 
 .media-item {
   position: relative;
+  width: 100%;
+  padding-bottom: 100%;
   border-radius: 12rpx;
   overflow: hidden;
   background-color: #fff;
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
 
-  .media-preview {
+  .media-image,
+  .media-video {
+    position: absolute;
+    top: 0;
+    left: 0;
     width: 100%;
-    height: 200rpx;
+    height: 100%;
+    object-fit: cover;
   }
 
-  .media-info {
+  .media-type {
     position: absolute;
-    bottom: 0;
-    left: 0;
-    right: 0;
-    padding: 10rpx;
-    background-color: rgba(0, 0, 0, 0.5);
-    color: #fff;
-    font-size: 22rpx;
-    display: flex;
-    justify-content: space-between;
-
-    .compressed {
-      color: #4cd964;
-    }
+    top: 12rpx;
+    right: 12rpx;
+    background: rgba(0, 0, 0, 0.5);
+    padding: 6rpx 12rpx;
+    border-radius: 20rpx;
   }
 }
 
-.edit-popup {
-  background-color: #fff;
-  border-radius: 12rpx;
-  padding: 30rpx;
-  width: 600rpx;
-
-  .popup-title {
-    font-size: 32rpx;
-    font-weight: bold;
-    text-align: center;
-    margin-bottom: 30rpx;
-  }
-
-  .input {
-    border: 1rpx solid #eee;
-    border-radius: 8rpx;
-    padding: 20rpx;
-    margin-bottom: 20rpx;
-  }
-
-  .textarea {
-    border: 1rpx solid #eee;
-    border-radius: 8rpx;
-    padding: 20rpx;
-    height: 200rpx;
-    margin-bottom: 30rpx;
-  }
-
-  .popup-btns {
-    display: flex;
-    justify-content: space-between;
-
-    button {
-      width: 45%;
-      margin: 0;
-    }
-  }
+.loading,
+.no-more {
+  text-align: center;
+  padding: 20rpx 0;
+  color: #999;
+  font-size: 24rpx;
 }
 </style>
