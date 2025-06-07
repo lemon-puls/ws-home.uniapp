@@ -363,22 +363,27 @@ const handleUpload = async () => {
       title: '上传中...',
     })
 
-    const fileKey = `album/${albumId.value}/${Date.now()}_${chooseRes.tempFiles[0].tempFilePath.split('/').pop()}`
+    // 批量上传文件
+    const uploadPromises = chooseRes.tempFiles.map(async (file) => {
+      const fileKey = `album/${albumId.value}/${Date.now()}_${file.tempFilePath.split('/').pop()}`
 
-    // 获取预签名URL
-    const presignedRes = (await Service.postCosPresignedUrl({
-      data: {
-        key: fileKey,
-        type: 'upload',
-      },
-    })) as unknown as ApiResponse<{ url: string; key: string }>
+      // 获取预签名URL
+      const presignedRes = (await Service.postCosPresignedUrl({
+        data: {
+          key: fileKey,
+          type: 'upload',
+        },
+      })) as unknown as ApiResponse<{ url: string; key: string }>
 
-    if (presignedRes.code === 0 && presignedRes.data) {
+      if (presignedRes.code !== 0 || !presignedRes.data) {
+        throw new Error('获取上传 URL 失败')
+      }
+
       try {
         // 读取文件内容
         const fileContent = await new Promise<ArrayBuffer>((resolve, reject) => {
           uni.getFileSystemManager().readFile({
-            filePath: chooseRes.tempFiles[0].tempFilePath,
+            filePath: file.tempFilePath,
             success: (res) => resolve(res.data as ArrayBuffer),
             fail: (err) => {
               console.error('读取文件失败:', err)
@@ -394,9 +399,7 @@ const handleUpload = async () => {
             method: 'PUT',
             data: fileContent,
             header: {
-              'Content-Type': chooseRes.tempFiles[0].tempFilePath.includes('image')
-                ? 'image/jpeg'
-                : 'video/mp4',
+              'Content-Type': file.tempFilePath.includes('image') ? 'image/jpeg' : 'video/mp4',
             },
             success: (res) => {
               console.log('上传响应:', res)
@@ -429,36 +432,36 @@ const handleUpload = async () => {
 
         console.log('downloadRes:', downloadRes)
 
-        // 保存文件信息到数据库
-        const saveRes = (await Service.postAlbumMedia({
-          body: {
-            album_id: albumId.value,
-            medias: [
-              {
-                url: downloadRes.data.url,
-                size: chooseRes.tempFiles[0].size,
-                is_raw: false,
-              },
-            ],
-          },
-        })) as unknown as ApiResponse<null>
-
-        if (saveRes.code === 0) {
-          uni.showToast({
-            title: '上传成功',
-            icon: 'success',
-          })
-          // 刷新列表
-          fetchMediaList()
-          fetchAlbumInfo()
+        return {
+          url: downloadRes.data.url,
+          size: file.size,
+          is_raw: false,
         }
       } catch (error) {
-        console.error('上传失败:', error)
-        uni.showToast({
-          title: '上传失败',
-          icon: 'none',
-        })
+        console.error('单个文件上传失败:', error)
+        throw error
       }
+    })
+
+    // 等待所有文件上传完成
+    const uploadResults = await Promise.all(uploadPromises)
+
+    // 保存所有文件信息到数据库
+    const saveRes = (await Service.postAlbumMedia({
+      body: {
+        album_id: albumId.value,
+        medias: uploadResults,
+      },
+    })) as unknown as ApiResponse<null>
+
+    if (saveRes.code === 0) {
+      uni.showToast({
+        title: '上传成功',
+        icon: 'success',
+      })
+      // 刷新列表
+      fetchMediaList()
+      fetchAlbumInfo()
     }
   } catch (error) {
     console.error('上传失败:', error)
