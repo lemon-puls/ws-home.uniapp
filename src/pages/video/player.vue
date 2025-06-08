@@ -6,7 +6,6 @@
         :src="videoUrl"
         class="video"
         controls
-        :poster="videoUrl"
         width="100%"
         height="100%"
         object-fit="contain"

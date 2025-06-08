@@ -111,7 +111,6 @@
               <video
                 :src="media.url"
                 class="media-video"
-                :poster="media.url"
                 object-fit="cover"
                 show-center-play-btn
                 show-play-btn
