@@ -47,6 +47,7 @@
 <script setup lang="ts">
 import { ref } from 'vue'
 import { formatSize } from '@/utils/format'
+import { usePageAuth } from '@/hooks/usePageAuth'
 
 interface MediaItem {
   path: string
@@ -59,6 +60,8 @@ const mediaList = ref<MediaItem[]>([])
 const compressImage = ref(true)
 const compressVideo = ref(true)
 const albumId = ref('')
+
+usePageAuth()
 
 // 选择媒体文件
 const handleChooseMedia = async () => {

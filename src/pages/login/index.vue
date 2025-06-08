@@ -155,6 +155,8 @@ const loginForm = ref<ILoginForm>({
 })
 // 隐私协议勾选状态
 const agreePrivacy = ref(true)
+const showPhoneBtn = ref(false)
+let tempUserProfile: any = null
 
 // 页面加载完毕时触发
 onLoad((option) => {
@@ -188,7 +190,11 @@ const handleAccountLogin = async () => {
   // 执行登录
   await userStore.login(loginForm.value)
   // 跳转到首页或重定向页面
-  const targetUrl = redirectRoute.value || '/pages/index/index'
+  let targetUrl = redirectRoute.value || '/pages/index/index'
+  targetUrl = decodeURIComponent(targetUrl)
+  if (!targetUrl.startsWith('/')) {
+    targetUrl = '/' + targetUrl
+  }
   if (isTableBar(targetUrl)) {
     uni.switchTab({ url: targetUrl })
   } else {
@@ -202,20 +208,31 @@ const handleWechatLogin = async () => {
     toast.info('请在微信小程序中使用此功能')
     return
   }
-
-  // 验证是否同意隐私协议
   if (!agreePrivacy.value) {
     toast.error('请先阅读并同意用户协议和隐私政策')
     return
   }
-  // 微信登录
-  await userStore.wxLogin()
-  // 跳转到首页或重定向页面
-  const targetUrl = redirectRoute.value || '/pages/index/index'
-  if (isTableBar(targetUrl)) {
-    uni.switchTab({ url: targetUrl })
-  } else {
-    uni.redirectTo({ url: targetUrl })
+  // 获取用户信息
+  try {
+    tempUserProfile = await uni.getUserProfile({
+      desc: '用于完善会员资料',
+    })
+    // 直接走微信登录
+    await userStore.wxLogin()
+    // 跳转
+    let targetUrl = redirectRoute.value || '/pages/index/index'
+    targetUrl = decodeURIComponent(targetUrl)
+    if (!targetUrl.startsWith('/')) {
+      targetUrl = '/' + targetUrl
+    }
+    if (isTableBar(targetUrl)) {
+      uni.switchTab({ url: targetUrl })
+    } else {
+      uni.redirectTo({ url: targetUrl })
+    }
+  } catch (e) {
+    toast.error('授权失败')
+    return
   }
 }
 

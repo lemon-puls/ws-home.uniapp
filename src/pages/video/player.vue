@@ -32,6 +32,9 @@
 </template>
 
 <script setup lang="ts">
+import { usePageAuth } from '@/hooks/usePageAuth'
+usePageAuth()
+
 console.log('视频播放页面组件加载')
 import { ref, onMounted, onUnmounted } from 'vue'
 import { onLoad, onShow, onHide } from '@dcloudio/uni-app'

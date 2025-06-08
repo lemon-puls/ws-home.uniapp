@@ -143,6 +143,7 @@ import { onLoad } from '@dcloudio/uni-app'
 import { formatDate, formatDateSimple } from '@/utils/date'
 import type { dto_AlbumMediaAddDTO } from '@/api/models/dto_AlbumMediaAddDTO'
 import type { dto_MediaMetaDTO } from '@/api/models/dto_MediaMetaDTO'
+import { usePageAuth } from '@/hooks/usePageAuth'
 
 interface ApiResponse<T> {
   code: number
@@ -538,6 +539,8 @@ const handleUpload = async () => {
     uni.hideLoading()
   }
 }
+
+usePageAuth()
 </script>
 
 <style lang="scss">

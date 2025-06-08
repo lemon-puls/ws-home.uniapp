@@ -75,6 +75,7 @@
 import { ref, onMounted } from 'vue'
 import { Service } from '@/api/services/Service'
 import { formatDate } from '@/utils/date'
+import { usePageAuth } from '@/hooks/usePageAuth'
 
 interface Album {
   id: number
@@ -116,6 +117,8 @@ const newAlbum = ref({
   title: '',
   description: '',
 })
+
+usePageAuth()
 
 // 获取相册列表
 const fetchAlbums = async () => {

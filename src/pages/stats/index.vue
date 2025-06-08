@@ -76,6 +76,9 @@
 import { ref, onMounted } from 'vue'
 import type { AlbumStats } from '@/types/album'
 import { formatSize } from '@/utils/format'
+import { usePageAuth } from '@/hooks/usePageAuth'
+
+usePageAuth()
 
 interface AlbumStat {
   id: string

@@ -91,11 +91,14 @@ import { useToast } from 'wot-design-uni'
 import { uploadFileUrl, useUpload } from '@/utils/uploadFile'
 import { storeToRefs } from 'pinia'
 import { IUploadSuccessInfo } from '@/api/login.typings'
+import { usePageAuth } from '@/hooks/usePageAuth'
 
 const userStore = useUserStore()
 
 const toast = useToast()
 const hasLogin = ref(false)
+
+usePageAuth()
 
 onShow((options) => {
   hasLogin.value = !!uni.getStorageSync('token')
@@ -116,15 +119,7 @@ const { run } = useUpload<IUploadSuccessInfo>(
 
 // 微信小程序下登录
 const handleLogin = async () => {
-  // #ifdef MP-WEIXIN
-
-  // 微信登录
-  await userStore.wxLogin()
-  hasLogin.value = true
-  // #endif
-  // #ifndef MP-WEIXIN
   uni.navigateTo({ url: '/pages/login/index' })
-  // #endif
 }
 
 // #ifdef MP-WEIXIN

@@ -67,6 +67,9 @@ import { useUserStore } from '@/store'
 import { storeToRefs } from 'pinia'
 import { toast } from '@/utils/toast'
 import { updateInfo, updateUserPassword } from '@/api/login'
+import { usePageAuth } from '@/hooks/usePageAuth'
+
+usePageAuth()
 
 // 表单引用
 const formRef = ref()

@@ -49,6 +49,9 @@
 <script lang="ts" setup>
 import { ref, computed } from 'vue'
 import packageJson from '@/../package.json'
+import { usePageAuth } from '@/hooks/usePageAuth'
+
+usePageAuth()
 
 const appTitle = ref(import.meta.env.VITE_APP_TITLE || 'unibest')
 const appLogo = ref(import.meta.env.VITE_APP_LOGO || '/static/logo.svg')
