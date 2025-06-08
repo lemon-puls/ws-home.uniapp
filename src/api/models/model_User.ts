@@ -11,6 +11,7 @@ export type model_User = {
   email?: string
   gender?: number
   id?: number
+  openID?: string
   phone?: string
   update_time?: string
   userId?: number

@@ -3,6 +3,13 @@
 /* tslint:disable */
 /* eslint-disable */
 export type dto_LoginDTO = {
-  password: string
-  phone: string
+  /**
+   * 微信登录参数
+   */
+  code?: string
+  password?: string
+  /**
+   * 账号密码登录参数
+   */
+  phone?: string
 }

@@ -9,6 +9,7 @@ import { defineStore } from 'pinia'
 import { ref } from 'vue'
 import { toast } from '@/utils/toast'
 import { IUserInfoVo } from '@/api/login.typings'
+import { Service } from '@/api'
 
 // 初始化状态
 const userInfoState: IUserInfoVo = {
@@ -38,7 +39,8 @@ export const useUserStore = defineStore(
     const removeUserInfo = () => {
       userInfo.value = { ...userInfoState }
       uni.removeStorageSync('userInfo')
-      uni.removeStorageSync('token')
+      uni.removeStorageSync('accessToken')
+      uni.removeStorageSync('refreshToken')
     }
     /**
      * 用户登录
@@ -84,8 +86,22 @@ export const useUserStore = defineStore(
       const data = await getWxCode()
       console.log('微信登录code', data)
 
-      const res = await _wxLogin(data)
-      getUserInfo()
+      const res = await Service.postUserLogin({
+        body: data,
+      })
+      console.log('微信登录结果', res)
+      // 保存 accessToken 和 refreshToken
+      if (res?.data) {
+        const { accessToken, refreshToken, userVO } = res.data
+        uni.setStorageSync('accessToken', accessToken)
+        uni.setStorageSync('refreshToken', refreshToken)
+
+        console.log('微信登录成功', userVO)
+        // 将 accessToken 存到 userInfo 里，便于拦截器读取
+        setUserInfo({ ...userVO, token: accessToken })
+      }
+      // 登录后不再调用 getUserInfo
+      // getUserInfo()
       return res
     }
 
@@ -94,6 +110,7 @@ export const useUserStore = defineStore(
       login,
       wxLogin,
       getUserInfo,
+      setUserInfo,
       logout,
     }
   },
