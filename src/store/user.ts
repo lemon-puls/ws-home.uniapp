@@ -105,6 +105,13 @@ export const useUserStore = defineStore(
       return res
     }
 
+    const isLogined = () => {
+      if (uni.getStorageSync('accessToken')) {
+        return true
+      }
+      return false
+    }
+
     return {
       userInfo,
       login,
@@ -112,6 +119,7 @@ export const useUserStore = defineStore(
       getUserInfo,
       setUserInfo,
       logout,
+      isLogined,
     }
   },
   {

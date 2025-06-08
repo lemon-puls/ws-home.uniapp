@@ -17,14 +17,14 @@ const isLogined = () => {
 
 const isDev = import.meta.env.DEV
 
-// 黑名单登录拦截器 - （适用于大部分页面不需要登录，少部分页面需要登录）
+// 白名单登录拦截器 - 只有登录页允许未登录访问，其他页面必须登录
 const navigateToInterceptor = {
-  // 注意，这里的url是 '/' 开头的，如 '/pages/index/index'，跟 'pages.json' 里面的 path 不同
-  // 增加对相对路径的处理，BY 网友 @ideal
   invoke({ url }: { url: string }) {
-    // console.log(url) // /pages/route-interceptor/index?name=feige&age=30
-    let path = url.split('?')[0]
+    console.log('全局路由拦截器')
 
+    // 只允许登录页未登录访问
+    const loginPath = loginRoute.startsWith('/') ? loginRoute : `/${loginRoute}`
+    let path = url.split('?')[0]
     // 处理相对路径
     if (!path.startsWith('/')) {
       const currentPath = getLastPage().route
@@ -32,24 +32,18 @@ const navigateToInterceptor = {
       const baseDir = normalizedCurrentPath.substring(0, normalizedCurrentPath.lastIndexOf('/'))
       path = `${baseDir}/${path}`
     }
-
-    let needLoginPages: string[] = []
-    // 为了防止开发时出现BUG，这里每次都获取一下。生产环境可以移到函数外，性能更好
-    if (isDev) {
-      needLoginPages = getNeedLoginPages()
-    } else {
-      needLoginPages = _needLoginPages
-    }
-    const isNeedLogin = needLoginPages.includes(path)
-    if (!isNeedLogin) {
+    // 如果是登录页，允许访问
+    if (path === loginPath) {
       return true
     }
-    const hasLogin = isLogined()
-    if (hasLogin) {
+    // 只要不是登录页，必须已登录
+    const userStore = useUserStore()
+    if (userStore.isLogined()) {
       return true
     }
+    // 未登录，跳转到登录页
     const redirectRoute = `${loginRoute}?redirect=${encodeURIComponent(url)}`
-    uni.navigateTo({ url: redirectRoute })
+    uni.redirectTo({ url: redirectRoute })
     return false
   },
 }
