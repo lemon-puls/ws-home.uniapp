@@ -193,7 +193,7 @@ export const sendRequest = async <T>(
       header: {
         'Content-Type': 'application/json',
         Authorization:
-          'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo2MDY5NTc0MzQwNDg1MTIsImlzcyI6Im5vdm8iLCJleHAiOjE3NDkzMTcwNTEsIm5iZiI6MTc0OTMxNTI1MSwiaWF0IjoxNzQ5MzE1MjUxfQ.SjOUGcbSMeKXy_OcsQeyXHgRR9xIOEPV7vtWnx2pUtQ',
+          'Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJ1c2VyX2lkIjo2MDY5NTc0MzQwNDg1MTIsImlzcyI6Im5vdm8iLCJleHAiOjE3NDkzNTg2OTUsIm5iZiI6MTc0OTM1Njg5NSwiaWF0IjoxNzQ5MzU2ODk1fQ.oYz2qSFf-3rMEe6CcdJMDzvY_CBo6Gj1VuelwVR708Y',
         ...headers,
       },
       method: options.method as any,
