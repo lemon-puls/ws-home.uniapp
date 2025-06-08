@@ -73,8 +73,13 @@ const httpInterceptor = {
     if (options.method && options.method.toUpperCase() !== 'UPLOADFILE') {
       const originalComplete = options.complete
       options.complete = async function (res) {
+        console.log('响应拦截器', res)
         // 401未登录，尝试刷新token
-        if (res && (res.statusCode === 401 || (res.data && res.data.code === 401))) {
+        if (
+          res &&
+          (res.statusCode === 401 || (res.data && res.data.code === 401) || res.data.code === 4)
+        ) {
+          console.log('token失效，尝试刷新token')
           try {
             await handleRefreshToken()
             // 刷新成功，重试原请求
