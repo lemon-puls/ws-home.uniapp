@@ -1,163 +1,212 @@
 <template>
   <view class="album-detail">
-    <!-- 相册信息 -->
-    <view class="album-info">
-      <view class="info-header">
-        <view class="author-info">
-          <image :src="albumInfo.user?.avatar" mode="aspectFill" class="avatar" />
-          <text class="username">{{ albumInfo.user?.userName || '未知用户' }}</text>
-        </view>
-      </view>
-
-      <view class="info-content">
-        <view class="title-section">
-          <text class="title">{{ albumInfo.name }}</text>
-        </view>
-
-        <view class="stats-section">
-          <view class="media-count">
-            <view class="count-item">
-              <wd-icon name="image" size="14px" color="#ff4757"></wd-icon>
-              <text class="count">{{ albumInfo.photo_count }}</text>
-            </view>
-            <view class="count-item">
-              <wd-icon name="video" size="14px" color="#2e86de"></wd-icon>
-              <text class="count">{{ albumInfo.video_count }}</text>
-            </view>
-          </view>
-          <text class="total-size">{{ albumInfo.total_size }} MB</text>
-        </view>
-
-        <view class="time-section">
-          <text class="time-range" v-if="albumInfo.start_time">
-            日期：{{ formatDateSimple(albumInfo.start_time) }}
-          </text>
-          <text class="create-time">创建：{{ formatDate(albumInfo.create_time) }}</text>
-        </view>
-
-        <view class="desc-section">
-          <text class="description">{{ albumInfo.description }}</text>
-        </view>
-      </view>
+    <!-- 背景动画 -->
+    <view class="bg-animation">
+      <view class="circle circle-1"></view>
+      <view class="circle circle-2"></view>
+      <view class="circle circle-3"></view>
     </view>
 
-    <!-- 媒体列表 -->
-    <view class="media-section">
-      <!-- 顶部工具栏 -->
-      <view class="top-bar">
-        <view class="filter-group">
-          <view class="filter-item">
-            <view class="filter-options">
-              <view
-                v-for="item in filterTypeOptions"
-                :key="item.value"
-                :class="['filter-option', filterType === item.value ? 'active' : '']"
-                @tap="handleFilterTypeChange(item.value)"
-              >
-                <wd-icon
-                  :name="item.icon"
-                  size="14px"
-                  :color="filterType === item.value ? '#ffffff' : '#666666'"
-                ></wd-icon>
-                <text>{{ item.label }}</text>
-              </view>
-            </view>
-          </view>
-
-          <view class="filter-item">
-            <view class="filter-options">
-              <view
-                v-for="item in imageTypeOptions"
-                :key="item.value"
-                :class="['filter-option', imageType === item.value ? 'active' : '']"
-                @tap="handleImageTypeChange(item.value)"
-              >
-                <wd-icon
-                  :name="item.icon"
-                  size="14px"
-                  :color="imageType === item.value ? '#ffffff' : '#666666'"
-                ></wd-icon>
-                <text>{{ item.label }}</text>
-              </view>
+    <!-- 使用scroll-view包裹整个内容 -->
+    <scroll-view
+      scroll-y
+      class="main-scroll"
+      @scrolltolower="loadMore"
+      lower-threshold="100"
+      @refresherrefresh="onRefresh"
+      refresher-enabled
+      :refresher-triggered="refreshing"
+    >
+      <!-- 相册信息 -->
+      <view class="album-info">
+        <view class="info-header">
+          <view class="author-info">
+            <image :src="albumInfo.user?.avatar" mode="aspectFill" class="avatar" />
+            <view class="user-info">
+              <text class="username">{{ albumInfo.user?.userName || '未知用户' }}</text>
+              <text class="create-time">创建于 {{ formatDate(albumInfo.create_time) }}</text>
             </view>
           </view>
         </view>
 
-        <view class="action-group">
-          <button v-if="isEditing" class="delete-btn" @tap="handleDeleteSelected">删除选定</button>
-          <button class="upload-btn" @tap="handleUpload">上传</button>
-          <button class="edit-btn" @tap="toggleEdit">{{ isEditing ? '完成' : '编辑' }}</button>
-        </view>
-      </view>
+        <view class="info-content">
+          <view class="title-section">
+            <text class="title">{{ albumInfo.name }}</text>
+            <text class="description" v-if="albumInfo.description">
+              {{ albumInfo.description }}
+            </text>
+          </view>
 
-      <!-- 新增：图片压缩开关 -->
-      <view class="compress-switch-bar">
-        <view class="compress-label">
-          <wd-icon name="compress" size="18px" color="#07c160" style="margin-right: 8rpx" />
-          <text>图片压缩</text>
+          <view class="stats-section">
+            <view class="stat-card">
+              <view class="stat-icon">
+                <wd-icon name="image" size="24px" color="#ff4757"></wd-icon>
+              </view>
+              <view class="stat-info">
+                <text class="stat-value">{{ albumInfo.photo_count }}</text>
+                <text class="stat-label">照片</text>
+              </view>
+            </view>
+            <view class="stat-card">
+              <view class="stat-icon">
+                <wd-icon name="video" size="24px" color="#2e86de"></wd-icon>
+              </view>
+              <view class="stat-info">
+                <text class="stat-value">{{ albumInfo.video_count }}</text>
+                <text class="stat-label">视频</text>
+              </view>
+            </view>
+            <view class="stat-card">
+              <view class="stat-icon">
+                <wd-icon name="info" size="24px" color="#07c160"></wd-icon>
+              </view>
+              <view class="stat-info">
+                <text class="stat-value">{{ formatSize(albumInfo.total_size) }}</text>
+                <text class="stat-label">总大小</text>
+              </view>
+            </view>
+          </view>
+
+          <view class="time-section" v-if="albumInfo.start_time">
+            <wd-icon name="calendar" size="16px" color="#576b95"></wd-icon>
+            <text class="time-range">{{ formatDateSimple(albumInfo.start_time) }}</text>
+          </view>
         </view>
-        <switch
-          :checked="compressImage"
-          @change="(e) => (compressImage = e.detail.value)"
-          color="#07c160"
-        />
-        <text class="compress-tip">
-          {{ compressImage ? '上传前自动压缩图片，节省空间' : '上传原图，保留最佳画质' }}
-        </text>
       </view>
 
       <!-- 媒体列表 -->
-      <scroll-view
-        scroll-y
-        class="media-list"
-        @refresherrefresh="onRefresh"
-        refresher-enabled
-        @scrolltolower="loadMore"
-        lower-threshold="100"
-        :refresher-triggered="refreshing"
-      >
-        <view class="media-grid">
-          <view
-            v-for="media in mediaList"
-            :key="media.id"
-            class="media-item"
-            :class="{ selected: selectedImages.includes(media.id) }"
-            @tap="() => handleMediaClick(media)"
-          >
-            <image
-              v-if="media.type === 0"
-              :src="media.url"
-              mode="aspectFill"
-              class="media-image"
-              lazy-load
-              :fade-show="true"
-            />
-            <view v-else class="media-video-container">
-              <video
-                :src="media.url"
-                class="media-video"
-                object-fit="cover"
-                :enable-progress-gesture="false"
-                :show-center-play-btn="false"
-                :show-play-btn="false"
-                :controls="false"
-                :show-fullscreen-btn="false"
-                :show-progress="false"
-                :enable-play-gesture="false"
-                :show-mute-btn="false"
-                title="视频"
-                @error="(e) => console.error('视频加载错误:', e)"
-              ></video>
-              <view class="media-type">
-                <wd-icon name="video" size="14px" color="#ffffff"></wd-icon>
+      <view class="media-section">
+        <!-- 顶部工具栏 -->
+        <view class="top-bar">
+          <view class="filter-group">
+            <view class="filter-item">
+              <view class="filter-options">
+                <view
+                  v-for="item in filterTypeOptions"
+                  :key="item.value"
+                  :class="['filter-option', filterType === item.value ? 'active' : '']"
+                  @tap="handleFilterTypeChange(item.value)"
+                >
+                  <wd-icon
+                    :name="item.icon"
+                    size="14px"
+                    :color="filterType === item.value ? '#ffffff' : '#666666'"
+                  ></wd-icon>
+                  <text>{{ item.label }}</text>
+                </view>
+              </view>
+            </view>
+
+            <view class="filter-item">
+              <view class="filter-options">
+                <view
+                  v-for="item in imageTypeOptions"
+                  :key="item.value"
+                  :class="['filter-option', imageType === item.value ? 'active' : '']"
+                  @tap="handleImageTypeChange(item.value)"
+                >
+                  <wd-icon
+                    :name="item.icon"
+                    size="14px"
+                    :color="imageType === item.value ? '#ffffff' : '#666666'"
+                  ></wd-icon>
+                  <text>{{ item.label }}</text>
+                </view>
               </view>
             </view>
           </view>
+
+          <view class="action-group">
+            <button v-if="isEditing" class="delete-btn" @tap="handleDeleteSelected">
+              <wd-icon name="delete" size="14px" color="#ffffff"></wd-icon>
+              <text>删除选定</text>
+            </button>
+            <button class="upload-btn" @tap="handleUpload">
+              <wd-icon name="upload" size="14px" color="#ffffff"></wd-icon>
+              <text>上传</text>
+            </button>
+            <button class="edit-btn" @tap="toggleEdit">
+              <wd-icon :name="isEditing ? 'check' : 'edit'" size="14px" color="#ffffff"></wd-icon>
+              <text>{{ isEditing ? '完成' : '编辑' }}</text>
+            </button>
+          </view>
         </view>
-        <view class="loading" v-if="loading">加载中...</view>
-        <view class="no-more" v-if="noMore">没有更多了</view>
-      </scroll-view>
-    </view>
+
+        <!-- 图片压缩开关 -->
+        <view class="compress-switch-bar">
+          <view class="compress-label">
+            <wd-icon name="compress" size="18px" color="#07c160"></wd-icon>
+            <text>图片压缩</text>
+          </view>
+          <switch
+            :checked="compressImage"
+            @change="(e) => (compressImage = e.detail.value)"
+            color="#07c160"
+          />
+          <text class="compress-tip">
+            {{ compressImage ? '上传前自动压缩图片，节省空间' : '上传原图，保留最佳画质' }}
+          </text>
+        </view>
+
+        <!-- 媒体列表 -->
+        <view class="media-list">
+          <view class="media-grid">
+            <view
+              v-for="(media, index) in mediaList"
+              :key="media.id"
+              class="media-item"
+              :class="{ selected: selectedImages.includes(media.id) }"
+              @tap="() => handleMediaClick(media)"
+              :style="{ animationDelay: index * 0.1 + 's' }"
+            >
+              <image
+                v-if="media.type === 0"
+                :src="media.url"
+                mode="aspectFill"
+                class="media-image"
+                lazy-load
+                :fade-show="true"
+              />
+              <view v-else class="media-video-container">
+                <image
+                  :src="media.meta?.poster || media.url"
+                  mode="aspectFill"
+                  class="media-video-poster"
+                />
+                <video
+                  :src="media.url"
+                  class="media-video"
+                  object-fit="cover"
+                  :enable-progress-gesture="false"
+                  :show-center-play-btn="false"
+                  :show-play-btn="false"
+                  :controls="false"
+                  :show-fullscreen-btn="false"
+                  :show-progress="false"
+                  :enable-play-gesture="false"
+                  :show-mute-btn="false"
+                  title="视频"
+                  @error="(e) => console.error('视频加载错误:', e)"
+                ></video>
+                <view class="media-type">
+                  <wd-icon name="video" size="14px" color="#ffffff"></wd-icon>
+                </view>
+              </view>
+              <view class="media-overlay">
+                <text class="view-more">点击查看</text>
+              </view>
+            </view>
+          </view>
+          <view class="loading" v-if="loading">
+            <wd-icon name="loading" size="24px" color="#07c160"></wd-icon>
+            <text>加载中...</text>
+          </view>
+          <view class="no-more" v-if="noMore">
+            <text>没有更多了</text>
+          </view>
+        </view>
+      </view>
+    </scroll-view>
   </view>
 </template>
 
@@ -606,6 +655,19 @@ const handleScroll = (e: any) => {
   scrollTop.value = e.detail.scrollTop
 }
 
+// 格式化文件大小
+const formatSize = (size: number) => {
+  if (size < 1024) {
+    return size + 'B'
+  } else if (size < 1024 * 1024) {
+    return (size / 1024).toFixed(1) + 'KB'
+  } else if (size < 1024 * 1024 * 1024) {
+    return (size / (1024 * 1024)).toFixed(1) + 'MB'
+  } else {
+    return (size / (1024 * 1024 * 1024)).toFixed(1) + 'GB'
+  }
+}
+
 usePageAuth()
 </script>
 
@@ -614,169 +676,244 @@ usePageAuth()
   display: flex;
   flex-direction: column;
   height: 100vh;
-  background-color: #f7f7f7;
+  background: linear-gradient(135deg, #f6f8fd 0%, #f1f4f9 100%);
   overflow: hidden;
   position: relative;
 }
 
+.main-scroll {
+  flex: 1;
+  height: 100%;
+  position: relative;
+  z-index: 2;
+}
+
+.bg-animation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  z-index: 1;
+
+  .circle {
+    position: absolute;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(1, 141, 113, 0.1), rgba(0, 184, 148, 0.1));
+    animation: float 8s infinite ease-in-out;
+  }
+
+  .circle-1 {
+    width: 300rpx;
+    height: 300rpx;
+    top: -100rpx;
+    right: -100rpx;
+    animation-delay: 0s;
+  }
+
+  .circle-2 {
+    width: 200rpx;
+    height: 200rpx;
+    bottom: 20%;
+    left: -50rpx;
+    animation-delay: -2s;
+  }
+
+  .circle-3 {
+    width: 250rpx;
+    height: 250rpx;
+    bottom: -100rpx;
+    right: 20%;
+    animation-delay: -4s;
+  }
+}
+
 .album-info {
-  background-color: #ffffff;
-  padding: 24rpx;
-  margin-bottom: 20rpx;
-  flex-shrink: 0;
+  position: relative;
+  z-index: 2;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  padding: 30rpx;
+  margin: 20rpx;
+  border-radius: 24rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
 
   .info-header {
     display: flex;
     justify-content: space-between;
     align-items: center;
-    margin-bottom: 24rpx;
+    margin-bottom: 30rpx;
 
     .author-info {
       display: flex;
       align-items: center;
-      gap: 16rpx;
+      gap: 20rpx;
 
       .avatar {
-        width: 80rpx;
-        height: 80rpx;
-        border-radius: 40rpx;
-        border: 2rpx solid #f0f0f0;
+        width: 88rpx;
+        height: 88rpx;
+        border-radius: 44rpx;
+        border: 4rpx solid rgba(255, 255, 255, 0.8);
+        box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
       }
 
-      .username {
-        font-size: 28rpx;
-        font-weight: 500;
-        color: #333333;
+      .user-info {
+        display: flex;
+        flex-direction: column;
+        gap: 8rpx;
+
+        .username {
+          font-size: 32rpx;
+          font-weight: 600;
+          color: #333;
+        }
+
+        .create-time {
+          font-size: 24rpx;
+          color: #666;
+        }
       }
     }
   }
 
   .info-content {
     .title-section {
-      margin-bottom: 24rpx;
+      margin-bottom: 30rpx;
 
       .title {
-        font-size: 36rpx;
+        font-size: 40rpx;
         font-weight: 600;
-        color: #333333;
+        color: #333;
+        margin-bottom: 12rpx;
+        display: block;
+      }
+
+      .description {
+        font-size: 28rpx;
+        color: #666;
+        line-height: 1.6;
       }
     }
 
     .stats-section {
-      display: flex;
-      justify-content: space-between;
-      align-items: center;
-      margin-bottom: 20rpx;
-      padding: 16rpx 0;
-      border-bottom: 2rpx solid #f5f5f5;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
+      gap: 20rpx;
+      margin-bottom: 30rpx;
 
-      .media-count {
+      .stat-card {
+        background: rgba(255, 255, 255, 0.8);
+        border-radius: 16rpx;
+        padding: 20rpx;
         display: flex;
-        gap: 24rpx;
+        align-items: center;
+        gap: 16rpx;
+        box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
 
-        .count-item {
+        .stat-icon {
+          width: 64rpx;
+          height: 64rpx;
+          border-radius: 16rpx;
+          background: rgba(7, 193, 96, 0.1);
           display: flex;
           align-items: center;
-          gap: 8rpx;
+          justify-content: center;
+        }
 
-          .count {
-            font-size: 26rpx;
-            font-weight: 500;
+        .stat-info {
+          display: flex;
+          flex-direction: column;
+          gap: 4rpx;
+
+          .stat-value {
+            font-size: 32rpx;
+            font-weight: 600;
+            color: #333;
+          }
+
+          .stat-label {
+            font-size: 24rpx;
+            color: #666;
           }
         }
-      }
-
-      .total-size {
-        font-size: 26rpx;
-        color: #666666;
       }
     }
 
     .time-section {
       display: flex;
-      justify-content: space-between;
-      margin-bottom: 20rpx;
-      font-size: 24rpx;
+      align-items: center;
+      gap: 8rpx;
+      padding: 16rpx 0;
+      border-top: 2rpx solid rgba(0, 0, 0, 0.05);
 
       .time-range {
+        font-size: 26rpx;
         color: #576b95;
       }
-
-      .create-time {
-        color: #999999;
-      }
-    }
-
-    .desc-section {
-      font-size: 26rpx;
-      color: #666666;
-      line-height: 1.6;
-      padding: 16rpx 0;
-      border-top: 2rpx solid #f5f5f5;
     }
   }
 }
 
 .media-section {
+  position: relative;
+  z-index: 2;
   flex: 1;
   display: flex;
   flex-direction: column;
-  background-color: #ffffff;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  margin: 0 20rpx 20rpx;
+  border-radius: 24rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
   overflow: hidden;
-  position: relative;
 
   .top-bar {
-    flex-shrink: 0;
     position: sticky;
     top: 0;
-    z-index: 2;
-    background-color: #ffffff;
+    z-index: 3;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
     padding: 24rpx;
-    border-bottom: 2rpx solid #f5f5f5;
-    display: flex;
-    justify-content: space-between;
-    align-items: center;
+    border-bottom: 2rpx solid rgba(0, 0, 0, 0.05);
 
     .filter-group {
       display: flex;
       flex-direction: column;
       gap: 16rpx;
-      flex: 1;
-      margin-right: 24rpx;
+      margin-bottom: 20rpx;
 
-      .filter-item {
-        .filter-options {
+      .filter-options {
+        display: flex;
+        gap: 16rpx;
+
+        .filter-option {
+          flex: 1;
+          height: 72rpx;
           display: flex;
-          gap: 16rpx;
+          align-items: center;
+          justify-content: center;
+          gap: 8rpx;
+          background: rgba(0, 0, 0, 0.05);
+          border-radius: 36rpx;
+          transition: all 0.3s ease;
 
-          .filter-option {
-            flex: 1;
-            height: 64rpx;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            gap: 8rpx;
-            background-color: #f7f7f7;
-            border-radius: 32rpx;
-            transition: all 0.3s ease;
-            padding: 0 24rpx;
+          text {
+            font-size: 26rpx;
+            color: #666;
+          }
+
+          &.active {
+            background: linear-gradient(135deg, #018d71, #00b894);
+            box-shadow: 0 4rpx 12rpx rgba(1, 141, 113, 0.2);
 
             text {
-              font-size: 24rpx;
-              color: #666666;
+              color: #fff;
             }
+          }
 
-            &.active {
-              background-color: #07c160;
-
-              text {
-                color: #ffffff;
-              }
-            }
-
-            &:active {
-              transform: scale(0.98);
-            }
+          &:active {
+            transform: scale(0.98);
           }
         }
       }
@@ -787,26 +924,30 @@ usePageAuth()
       gap: 16rpx;
 
       button {
-        font-size: 24rpx;
-        padding: 0 32rpx;
-        height: 64rpx;
-        line-height: 64rpx;
-        border-radius: 32rpx;
+        flex: 1;
+        height: 72rpx;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8rpx;
+        border-radius: 36rpx;
         border: none;
+        font-size: 26rpx;
+        transition: all 0.3s ease;
 
         &.delete-btn {
-          background-color: #ff4d4f;
-          color: #ffffff;
+          background: linear-gradient(135deg, #ff4757, #ff6b81);
+          color: #fff;
         }
 
         &.upload-btn {
-          background-color: #2e86de;
-          color: #ffffff;
+          background: linear-gradient(135deg, #2e86de, #54a0ff);
+          color: #fff;
         }
 
         &.edit-btn {
-          background-color: #07c160;
-          color: #ffffff;
+          background: linear-gradient(135deg, #018d71, #00b894);
+          color: #fff;
         }
 
         &:active {
@@ -817,63 +958,52 @@ usePageAuth()
   }
 
   .compress-switch-bar {
-    flex-shrink: 0;
     position: sticky;
     top: 180rpx;
-    z-index: 2;
-    background-color: #ffffff;
+    z-index: 3;
+    background: rgba(255, 255, 255, 0.9);
+    backdrop-filter: blur(10px);
+    margin: 20rpx;
+    padding: 20rpx;
+    border-radius: 16rpx;
     display: flex;
     align-items: center;
-    border-radius: 12rpx;
-    padding: 18rpx 24rpx;
-    margin: 18rpx 18rpx 0 18rpx;
-    gap: 18rpx;
-    box-shadow: 0 2rpx 8rpx rgba(7, 193, 96, 0.04);
+    gap: 16rpx;
+
     .compress-label {
       display: flex;
       align-items: center;
+      gap: 8rpx;
       font-size: 28rpx;
       color: #07c160;
       font-weight: 500;
     }
+
     .compress-tip {
-      margin-left: 18rpx;
+      flex: 1;
       font-size: 24rpx;
-      color: #999;
+      color: #666;
     }
   }
 
   .media-list {
-    flex: 1;
     position: relative;
-    overflow: hidden;
-    -webkit-overflow-scrolling: touch;
-    transform: translateZ(0);
-    will-change: transform;
+    padding: 16rpx;
 
     .media-grid {
-      padding: 16rpx;
-      display: flex;
-      flex-wrap: wrap;
+      display: grid;
+      grid-template-columns: repeat(3, 1fr);
       gap: 16rpx;
       padding-bottom: 32rpx;
-      min-height: 100%;
-      box-sizing: border-box;
-      transform: translateZ(0);
-      will-change: transform;
 
       .media-item {
-        width: calc(33.33% - 11rpx);
-        aspect-ratio: 1;
         position: relative;
-        border-radius: 12rpx;
+        aspect-ratio: 1;
+        border-radius: 16rpx;
         overflow: hidden;
-        background-color: #f7f7f7;
-        transform: translateZ(0);
-        will-change: transform;
-        backface-visibility: hidden;
-        perspective: 1000;
-        transform-style: preserve-3d;
+        background: #f7f7f7;
+        animation: slideUp 0.6s ease-out forwards;
+        opacity: 0;
 
         &.selected {
           &::before {
@@ -884,20 +1014,18 @@ usePageAuth()
             right: 0;
             bottom: 0;
             border: 4rpx solid #07c160;
-            border-radius: 12rpx;
+            border-radius: 16rpx;
             box-shadow: 0 0 20rpx rgba(7, 193, 96, 0.3);
             z-index: 1;
           }
         }
 
-        .media-image {
+        .media-image,
+        .media-video {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          background-color: #000000;
-          transform: translateZ(0);
-          will-change: transform;
-          backface-visibility: hidden;
+          transition: transform 0.3s ease;
         }
 
         .media-video-container {
@@ -905,76 +1033,108 @@ usePageAuth()
           height: 100%;
           position: relative;
           background-color: #000000;
-          transform: translateZ(0);
-          will-change: transform;
-          backface-visibility: hidden;
+          overflow: hidden;
 
-          .media-video {
+          .media-video-poster {
+            position: absolute;
+            top: 0;
+            left: 0;
             width: 100%;
             height: 100%;
             object-fit: cover;
-            transform: translateZ(0);
-            will-change: transform;
-            backface-visibility: hidden;
+            z-index: 1;
+          }
+
+          .media-video {
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            z-index: 2;
+          }
+
+          .media-type {
+            position: absolute;
+            top: 12rpx;
+            right: 12rpx;
+            background: rgba(0, 0, 0, 0.5);
+            padding: 6rpx 12rpx;
+            border-radius: 20rpx;
+            backdrop-filter: blur(4px);
+            z-index: 3;
           }
         }
 
-        .media-type {
+        .media-overlay {
           position: absolute;
-          top: 12rpx;
-          right: 12rpx;
-          background-color: rgba(0, 0, 0, 0.5);
-          padding: 6rpx 12rpx;
-          border-radius: 20rpx;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.4);
           display: flex;
           align-items: center;
-          gap: 4rpx;
-          z-index: 2;
+          justify-content: center;
+          opacity: 0;
+          transition: opacity 0.3s ease;
+
+          .view-more {
+            color: #fff;
+            font-size: 28rpx;
+            padding: 12rpx 24rpx;
+            border: 2rpx solid #fff;
+            border-radius: 30rpx;
+            backdrop-filter: blur(4px);
+          }
+        }
+
+        &:active {
+          .media-image,
+          .media-video {
+            transform: scale(1.05);
+          }
+
+          .media-overlay {
+            opacity: 1;
+          }
         }
       }
     }
 
     .loading,
     .no-more {
-      position: sticky;
-      bottom: 0;
-      left: 0;
-      right: 0;
-      background-color: #ffffff;
-      padding: 16rpx 0;
+      padding: 30rpx 0;
       text-align: center;
-      z-index: 1;
-      transform: translateZ(0);
+      color: #999;
+      font-size: 26rpx;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      gap: 8rpx;
     }
   }
 }
 
-// 添加下拉刷新样式
-.refresher {
-  background-color: #f7f7f7;
-}
-
-// 添加加载动画
-@keyframes loading {
-  0% {
-    transform: rotate(0deg);
-  }
+@keyframes float {
+  0%,
   100% {
-    transform: rotate(360deg);
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20rpx);
   }
 }
 
-.loading {
-  &::before {
-    content: '';
-    display: inline-block;
-    width: 24rpx;
-    height: 24rpx;
-    border: 4rpx solid #07c160;
-    border-top-color: transparent;
-    border-radius: 50%;
-    margin-right: 12rpx;
-    animation: loading 0.8s linear infinite;
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 </style>
