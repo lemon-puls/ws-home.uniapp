@@ -90,6 +90,22 @@
         </view>
       </view>
 
+      <!-- 新增：图片压缩开关 -->
+      <view class="compress-switch-bar">
+        <view class="compress-label">
+          <wd-icon name="compress" size="18px" color="#07c160" style="margin-right: 8rpx" />
+          <text>图片压缩</text>
+        </view>
+        <switch
+          :checked="compressImage"
+          @change="(e) => (compressImage = e.detail.value)"
+          color="#07c160"
+        />
+        <text class="compress-tip">
+          {{ compressImage ? '上传前自动压缩图片，节省空间' : '上传原图，保留最佳画质' }}
+        </text>
+      </view>
+
       <!-- 媒体列表 -->
       <scroll-view
         scroll-y
@@ -190,6 +206,7 @@ const isEditing = ref(false)
 const selectedImages = ref<number[]>([])
 const filterType = ref('all')
 const imageType = ref('compressed')
+const compressImage = ref<boolean>(true) // 新增：图片压缩开关
 
 // 筛选类型选项
 const filterTypeOptions = [
@@ -248,7 +265,8 @@ const fetchMediaList = async (isLoadMore = false) => {
       body: {
         album_id: albumId.value,
         cursor: isLoadMore ? cursor.value : '',
-        is_raw: imageType.value === 'raw',
+        is_raw:
+          imageType.value === 'raw' ? true : imageType.value === 'compressed' ? false : undefined,
         pageSize: 20,
         type: filterType.value === 'image' ? 0 : filterType.value === 'video' ? 1 : undefined,
       },
@@ -422,7 +440,28 @@ const handleUpload = async () => {
 
     // 批量上传文件
     const uploadPromises = chooseRes.tempFiles.map(async (file) => {
-      const fileKey = `album/${albumId.value}/${Date.now()}_${file.tempFilePath.split('/').pop()}`
+      let uploadFilePath = file.tempFilePath
+      // 如果是图片且需要压缩
+      if (compressImage.value && file.fileType === 'image') {
+        try {
+          const compressRes = await uni.compressImage({
+            src: file.tempFilePath,
+            quality: 50, // 压缩质量0-100
+          })
+          uploadFilePath = compressRes.tempFilePath
+          const fileInfo = await uni.getFileInfo({ filePath: compressRes.tempFilePath })
+          console.log(
+            '压缩前大小:',
+            (file.size / 1024 / 1024).toFixed(2) + 'M',
+            '压缩后大小:',
+            (fileInfo.size / 1024 / 1024).toFixed(2) + 'M',
+          )
+        } catch (err) {
+          console.warn('图片压缩失败，使用原图', err)
+        }
+      }
+
+      const fileKey = `album/${albumId.value}/${Date.now()}_${uploadFilePath.split('/').pop()}`
 
       // 获取预签名URL
       const presignedRes = (await Service.postCosPresignedUrl({
@@ -440,7 +479,7 @@ const handleUpload = async () => {
         // 读取文件内容
         const fileContent = await new Promise<ArrayBuffer>((resolve, reject) => {
           uni.getFileSystemManager().readFile({
-            filePath: file.tempFilePath,
+            filePath: uploadFilePath,
             success: (res) => resolve(res.data as ArrayBuffer),
             fail: (err) => {
               console.error('读取文件失败:', err)
@@ -456,7 +495,7 @@ const handleUpload = async () => {
             method: 'PUT',
             data: fileContent,
             header: {
-              'Content-Type': file.tempFilePath.includes('image') ? 'image/jpeg' : 'video/mp4',
+              'Content-Type': uploadFilePath.includes('image') ? 'image/jpeg' : 'video/mp4',
             },
             success: (res) => {
               console.log('上传响应:', res)
@@ -741,6 +780,29 @@ usePageAuth()
           transform: scale(0.98);
         }
       }
+    }
+  }
+
+  .compress-switch-bar {
+    display: flex;
+    align-items: center;
+    background: #f8f8f8;
+    border-radius: 12rpx;
+    padding: 18rpx 24rpx;
+    margin: 18rpx 18rpx 0 18rpx;
+    gap: 18rpx;
+    box-shadow: 0 2rpx 8rpx rgba(7, 193, 96, 0.04);
+    .compress-label {
+      display: flex;
+      align-items: center;
+      font-size: 28rpx;
+      color: #07c160;
+      font-weight: 500;
+    }
+    .compress-tip {
+      margin-left: 18rpx;
+      font-size: 24rpx;
+      color: #999;
     }
   }
 
