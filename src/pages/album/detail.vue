@@ -110,9 +110,11 @@
       <scroll-view
         scroll-y
         class="media-list"
-        @scrolltolower="loadMore"
-        refresher-enabled
         @refresherrefresh="onRefresh"
+        refresher-enabled
+        @scrolltolower="loadMore"
+        lower-threshold="100"
+        :refresher-triggered="refreshing"
       >
         <view class="media-grid">
           <view
@@ -122,22 +124,29 @@
             :class="{ selected: selectedImages.includes(media.id) }"
             @tap="() => handleMediaClick(media)"
           >
-            <image v-if="media.type === 0" :src="media.url" mode="aspectFill" class="media-image" />
+            <image
+              v-if="media.type === 0"
+              :src="media.url"
+              mode="aspectFill"
+              class="media-image"
+              lazy-load
+              :fade-show="true"
+            />
             <view v-else class="media-video-container">
               <video
                 :src="media.url"
                 class="media-video"
                 object-fit="cover"
-                show-center-play-btn
-                show-play-btn
-                controls
-                :initial-time="0"
-                enable-progress-gesture
-                show-fullscreen-btn
-                show-progress
-                enable-play-gesture
-                show-mute-btn
+                :enable-progress-gesture="false"
+                :show-center-play-btn="false"
+                :show-play-btn="false"
+                :controls="false"
+                :show-fullscreen-btn="false"
+                :show-progress="false"
+                :enable-play-gesture="false"
+                :show-mute-btn="false"
                 title="视频"
+                @error="(e) => console.error('视频加载错误:', e)"
               ></video>
               <view class="media-type">
                 <wd-icon name="video" size="14px" color="#ffffff"></wd-icon>
@@ -207,6 +216,8 @@ const selectedImages = ref<number[]>([])
 const filterType = ref('all')
 const imageType = ref('compressed')
 const compressImage = ref<boolean>(true) // 新增：图片压缩开关
+const scrollTop = ref(0)
+const refreshing = ref(false)
 
 // 筛选类型选项
 const filterTypeOptions = [
@@ -257,9 +268,16 @@ const fetchAlbumInfo = async () => {
 
 // 获取媒体列表
 const fetchMediaList = async (isLoadMore = false) => {
-  if (loading.value || (noMore.value && isLoadMore)) return
+  if (loading.value) {
+    return
+  }
+
+  if (noMore.value && isLoadMore) {
+    return
+  }
 
   loading.value = true
+
   try {
     const response = (await Service.postAlbumMediaList({
       body: {
@@ -274,12 +292,12 @@ const fetchMediaList = async (isLoadMore = false) => {
 
     if (response?.code === 0) {
       const { data, cursor: newCursor, isLast } = response.data
+
       if (isLoadMore) {
         mediaList.value.push(...data)
       } else {
         mediaList.value = data
       }
-      console.log('媒体列表数据:', JSON.parse(JSON.stringify(mediaList.value)))
       cursor.value = newCursor
       noMore.value = isLast
     }
@@ -295,14 +313,18 @@ const fetchMediaList = async (isLoadMore = false) => {
 
 // 加载更多
 const loadMore = () => {
-  fetchMediaList(true)
+  if (!loading.value && !noMore.value) {
+    fetchMediaList(true)
+  }
 }
 
 // 下拉刷新
 const onRefresh = async () => {
+  refreshing.value = true
   cursor.value = ''
   noMore.value = false
   await fetchMediaList()
+  refreshing.value = false
   uni.stopPullDownRefresh()
 }
 
@@ -579,6 +601,11 @@ const handleUpload = async () => {
   }
 }
 
+// 处理滚动
+const handleScroll = (e: any) => {
+  scrollTop.value = e.detail.scrollTop
+}
+
 usePageAuth()
 </script>
 
@@ -586,14 +613,17 @@ usePageAuth()
 .album-detail {
   display: flex;
   flex-direction: column;
-  min-height: 100vh;
+  height: 100vh;
   background-color: #f7f7f7;
+  overflow: hidden;
+  position: relative;
 }
 
 .album-info {
   background-color: #ffffff;
   padding: 24rpx;
   margin-bottom: 20rpx;
+  flex-shrink: 0;
 
   .info-header {
     display: flex;
@@ -692,17 +722,20 @@ usePageAuth()
   display: flex;
   flex-direction: column;
   background-color: #ffffff;
+  overflow: hidden;
+  position: relative;
 
   .top-bar {
+    flex-shrink: 0;
+    position: sticky;
+    top: 0;
+    z-index: 2;
+    background-color: #ffffff;
     padding: 24rpx;
     border-bottom: 2rpx solid #f5f5f5;
     display: flex;
     justify-content: space-between;
     align-items: center;
-    background-color: #ffffff;
-    position: sticky;
-    top: 0;
-    z-index: 100;
 
     .filter-group {
       display: flex;
@@ -784,9 +817,13 @@ usePageAuth()
   }
 
   .compress-switch-bar {
+    flex-shrink: 0;
+    position: sticky;
+    top: 180rpx;
+    z-index: 2;
+    background-color: #ffffff;
     display: flex;
     align-items: center;
-    background: #f8f8f8;
     border-radius: 12rpx;
     padding: 18rpx 24rpx;
     margin: 18rpx 18rpx 0 18rpx;
@@ -808,12 +845,22 @@ usePageAuth()
 
   .media-list {
     flex: 1;
-    padding: 16rpx;
+    position: relative;
+    overflow: hidden;
+    -webkit-overflow-scrolling: touch;
+    transform: translateZ(0);
+    will-change: transform;
 
     .media-grid {
+      padding: 16rpx;
       display: flex;
       flex-wrap: wrap;
       gap: 16rpx;
+      padding-bottom: 32rpx;
+      min-height: 100%;
+      box-sizing: border-box;
+      transform: translateZ(0);
+      will-change: transform;
 
       .media-item {
         width: calc(33.33% - 11rpx);
@@ -822,6 +869,11 @@ usePageAuth()
         border-radius: 12rpx;
         overflow: hidden;
         background-color: #f7f7f7;
+        transform: translateZ(0);
+        will-change: transform;
+        backface-visibility: hidden;
+        perspective: 1000;
+        transform-style: preserve-3d;
 
         &.selected {
           &::before {
@@ -838,12 +890,14 @@ usePageAuth()
           }
         }
 
-        .media-image,
-        .media-video {
+        .media-image {
           width: 100%;
           height: 100%;
           object-fit: cover;
           background-color: #000000;
+          transform: translateZ(0);
+          will-change: transform;
+          backface-visibility: hidden;
         }
 
         .media-video-container {
@@ -851,6 +905,18 @@ usePageAuth()
           height: 100%;
           position: relative;
           background-color: #000000;
+          transform: translateZ(0);
+          will-change: transform;
+          backface-visibility: hidden;
+
+          .media-video {
+            width: 100%;
+            height: 100%;
+            object-fit: cover;
+            transform: translateZ(0);
+            will-change: transform;
+            backface-visibility: hidden;
+          }
         }
 
         .media-type {
@@ -870,10 +936,15 @@ usePageAuth()
 
     .loading,
     .no-more {
+      position: sticky;
+      bottom: 0;
+      left: 0;
+      right: 0;
+      background-color: #ffffff;
+      padding: 16rpx 0;
       text-align: center;
-      padding: 32rpx;
-      color: #999999;
-      font-size: 24rpx;
+      z-index: 1;
+      transform: translateZ(0);
     }
   }
 }
