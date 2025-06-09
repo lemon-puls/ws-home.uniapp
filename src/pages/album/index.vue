@@ -7,7 +7,13 @@
       </view>
     </view>
 
-    <scroll-view scroll-y class="album-list" @refresherrefresh="onRefresh" refresher-enabled>
+    <scroll-view
+      scroll-y
+      class="album-list"
+      @refresherrefresh="onRefresh"
+      refresher-enabled
+      @scrolltolower="onScrollToLower"
+    >
       <view class="album-grid">
         <view
           v-for="album in albums"
@@ -37,6 +43,16 @@
             <text class="album-desc" v-if="album.description">{{ album.description }}</text>
             <text class="update-time">{{ formatDate(album.updatedAt) }}</text>
           </view>
+        </view>
+      </view>
+      <!-- 底部加载状态 -->
+      <view class="load-more">
+        <view v-if="isLoading" class="loading">
+          <wd-icon name="loading" size="24px" color="#999999"></wd-icon>
+          <text>加载中...</text>
+        </view>
+        <view v-else-if="!hasMore && albums.length > 0" class="no-more">
+          <text>没有更多了</text>
         </view>
       </view>
     </scroll-view>
@@ -118,18 +134,27 @@ const newAlbum = ref({
   description: '',
 })
 
+// 添加分页相关状态
+const currentPage = ref(1)
+const pageSize = ref(20)
+const hasMore = ref(true)
+const isLoading = ref(false)
+
 usePageAuth()
 
 // 获取相册列表
-const fetchAlbums = async () => {
+const fetchAlbums = async (isLoadMore = false) => {
+  if (isLoading.value || (!isLoadMore && !hasMore.value)) return
+
   try {
+    isLoading.value = true
     const response = (await Service.getAlbumList({
-      page: 1,
-      limit: 20,
+      page: currentPage.value,
+      limit: pageSize.value,
     })) as unknown as AlbumListResponse
 
     if (response?.code === 0 && response?.data?.records) {
-      albums.value = response.data.records.map((item) => ({
+      const newAlbums = response.data.records.map((item) => ({
         id: item.id,
         name: item.name,
         description: item.description || '',
@@ -141,13 +166,35 @@ const fetchAlbums = async () => {
         totalSize: Number(item.total_size) || 0,
         startTime: item.start_time,
       }))
+
+      if (isLoadMore) {
+        albums.value = [...albums.value, ...newAlbums]
+      } else {
+        albums.value = newAlbums
+      }
+
+      // 判断是否还有更多数据
+      hasMore.value = newAlbums.length === pageSize.value
+      if (hasMore.value) {
+        currentPage.value++
+      }
     }
   } catch (error) {
     uni.showToast({
       title: '获取相册列表失败',
       icon: 'none',
     })
+  } finally {
+    isLoading.value = false
   }
+}
+
+// 重置列表
+const resetList = () => {
+  currentPage.value = 1
+  hasMore.value = true
+  albums.value = []
+  fetchAlbums()
 }
 
 // 创建相册
@@ -204,8 +251,15 @@ const handleAlbumClick = (album: Album) => {
 
 // 下拉刷新
 const onRefresh = async () => {
-  await fetchAlbums()
+  resetList()
   uni.stopPullDownRefresh()
+}
+
+// 滚动到底部加载更多
+const onScrollToLower = () => {
+  if (hasMore.value && !isLoading.value) {
+    fetchAlbums(true)
+  }
 }
 
 onMounted(() => {
@@ -473,5 +527,20 @@ onMounted(() => {
   display: -webkit-box;
   -webkit-line-clamp: 2;
   -webkit-box-orient: vertical;
+}
+
+.load-more {
+  padding: 30rpx 0;
+  text-align: center;
+
+  .loading,
+  .no-more {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 10rpx;
+    color: #999999;
+    font-size: 24rpx;
+  }
 }
 </style>
