@@ -6,6 +6,11 @@ export type IUserInfoVo = {
   username: string
   avatar: string
   token: string
+  phone?: string
+  email?: string
+  gender?: number
+  age?: number
+  create_time?: string
 }
 
 /**

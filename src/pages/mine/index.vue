@@ -8,88 +8,87 @@
 
 <template>
   <view class="profile-container">
-    {{ JSON.stringify(userStore.userInfo) }}
-    <!-- 用户信息区域 -->
-    <view class="user-info-section">
-      <!-- #ifdef MP-WEIXIN -->
-      <button class="avatar-button" open-type="chooseAvatar" @chooseavatar="onChooseAvatar">
-        <wd-img :src="userStore.userInfo.avatar" width="80px" height="80px" radius="50%"></wd-img>
-      </button>
-      <!-- #endif -->
-      <!-- #ifndef MP-WEIXIN -->
-      <view class="avatar-wrapper" @click="run">
-        <wd-img :src="userStore.userInfo.avatar" width="100%" height="100%" radius="50%"></wd-img>
-      </view>
-      <!-- #endif -->
-      <view class="user-details">
-        <!-- #ifdef MP-WEIXIN -->
-        <input
-          type="nickname"
-          class="weui-input"
-          placeholder="请输入昵称"
-          v-model="userStore.userInfo.username"
-        />
-        <!-- #endif -->
-        <!-- #ifndef MP-WEIXIN -->
-        <view class="username">{{ userStore.userInfo.username }}</view>
-        <!-- #endif -->
-        <view class="user-id">ID: {{ userStore.userInfo.id }}</view>
-      </view>
+    <!-- 背景动画 -->
+    <view class="bg-animation">
+      <view class="circle circle-1"></view>
+      <view class="circle circle-2"></view>
+      <view class="circle circle-3"></view>
     </view>
 
-    <!-- 功能区块 -->
-    <view class="function-section">
-      <view class="cell-group">
-        <view class="group-title">账号管理</view>
-        <wd-cell title="个人资料" is-link @click="handleProfileInfo">
-          <template #icon>
-            <wd-icon name="user" size="20px"></wd-icon>
-          </template>
-        </wd-cell>
-        <wd-cell title="账号安全" is-link @click="handlePassword">
-          <template #icon>
-            <wd-icon name="lock-on" size="20px"></wd-icon>
-          </template>
-        </wd-cell>
+    <scroll-view scroll-y class="main-scroll">
+      <!-- 用户信息区域 -->
+      <view class="user-info-section">
+        <!-- #ifdef MP-WEIXIN -->
+        <button class="avatar-button" open-type="chooseAvatar" @chooseavatar="onChooseAvatar">
+          <wd-img :src="userStore.userInfo.avatar" width="80px" height="80px" radius="50%"></wd-img>
+        </button>
+        <!-- #endif -->
+        <!-- #ifndef MP-WEIXIN -->
+        <view class="avatar-wrapper" @click="run">
+          <wd-img :src="userStore.userInfo.avatar" width="100%" height="100%" radius="50%"></wd-img>
+        </view>
+        <!-- #endif -->
+        <view class="user-details">
+          <!-- #ifdef MP-WEIXIN -->
+          <input
+            type="nickname"
+            class="weui-input"
+            placeholder="请输入昵称"
+            v-model="userStore.userInfo.username"
+          />
+          <!-- #endif -->
+          <!-- #ifndef MP-WEIXIN -->
+          <view class="username">{{ userStore.userInfo.username }}</view>
+          <!-- #endif -->
+          <view class="user-id">ID: {{ userStore.userInfo.id }}</view>
+          <view class="user-created">
+            {{
+              userStore.userInfo.create_time
+                ? formatCreateTime(userStore.userInfo.create_time)
+                : '未知注册时间'
+            }}
+          </view>
+        </view>
       </view>
 
-      <view class="cell-group">
-        <view class="group-title">通用设置</view>
-        <wd-cell title="消息通知" is-link @click="handleInform">
-          <template #icon>
-            <wd-icon name="notification" size="20px"></wd-icon>
-          </template>
-        </wd-cell>
-        <wd-cell title="清理缓存" is-link @click="handleClearCache">
-          <template #icon>
-            <wd-icon name="clear" size="20px"></wd-icon>
-          </template>
-        </wd-cell>
-        <wd-cell title="应用更新" is-link @click="handleAppUpdate">
-          <template #icon>
-            <wd-icon name="refresh1" size="20px"></wd-icon>
-          </template>
-        </wd-cell>
-        <wd-cell title="关于我们" is-link @click="handleAbout">
-          <template #icon>
-            <wd-icon name="info-circle" size="20px"></wd-icon>
-          </template>
-        </wd-cell>
+      <!-- 额外用户详情 -->
+      <view class="extra-info-section">
+        <view class="info-item" v-if="userStore.userInfo.phone">
+          <wd-icon name="phone" size="20px" color="#666"></wd-icon>
+          <text class="info-label">电话:</text>
+          <text class="info-value">{{ userStore.userInfo.phone }}</text>
+        </view>
+        <view class="info-item" v-if="userStore.userInfo.email">
+          <wd-icon name="mail" size="20px" color="#666"></wd-icon>
+          <text class="info-label">邮箱:</text>
+          <text class="info-value">{{ userStore.userInfo.email }}</text>
+        </view>
+        <view class="info-item" v-if="userStore.userInfo.gender !== undefined">
+          <wd-icon name="user-filled" size="20px" color="#666"></wd-icon>
+          <text class="info-label">性别:</text>
+          <text class="info-value">{{ formatGender(userStore.userInfo.gender) }}</text>
+        </view>
+        <view class="info-item" v-if="userStore.userInfo.age">
+          <wd-icon name="date" size="20px" color="#666"></wd-icon>
+          <text class="info-label">年龄:</text>
+          <text class="info-value">{{ userStore.userInfo.age }}</text>
+        </view>
       </view>
 
+      <!-- 登录/退出登录按钮 -->
       <view class="logout-button-wrapper">
         <wd-button type="error" v-if="hasLogin" block @click="handleLogout">退出登录</wd-button>
         <wd-button type="primary" v-else block @click="handleLogin">登录</wd-button>
       </view>
-    </view>
+    </scroll-view>
   </view>
 </template>
 
 <script lang="ts" setup>
+import { ref } from 'vue'
 import { useUserStore } from '@/store'
 import { useToast } from 'wot-design-uni'
 import { uploadFileUrl, useUpload } from '@/utils/uploadFile'
-import { storeToRefs } from 'pinia'
 import { IUploadSuccessInfo } from '@/api/login.typings'
 import { usePageAuth } from '@/hooks/usePageAuth'
 
@@ -104,15 +103,29 @@ onShow((options) => {
   hasLogin.value = !!uni.getStorageSync('token')
   console.log('个人中心onShow', hasLogin.value, options)
 
-  hasLogin.value && useUserStore().getUserInfo()
+  hasLogin.value && userStore.getUserInfo()
 })
+
+// 格式化性别
+const formatGender = (gender: number | undefined) => {
+  if (gender === 1) return '男'
+  if (gender === 2) return '女'
+  return '未知'
+}
+
+// 格式化创建时间
+const formatCreateTime = (time: string) => {
+  const date = new Date(time)
+  return `${date.getFullYear()}-${(date.getMonth() + 1).toString().padStart(2, '0')}-${date.getDate().toString().padStart(2, '0')}`
+}
+
 // #ifndef MP-WEIXIN
 // 上传头像
 const { run } = useUpload<IUploadSuccessInfo>(
   uploadFileUrl.USER_AVATAR,
   {},
   {
-    onSuccess: (res) => useUserStore().getUserInfo(),
+    onSuccess: (res) => userStore.getUserInfo(),
   },
 )
 // #endif
@@ -132,7 +145,7 @@ const onChooseAvatar = (e: any) => {
     uploadFileUrl.USER_AVATAR,
     {},
     {
-      onSuccess: (res) => useUserStore().getUserInfo(),
+      onSuccess: (res) => userStore.getUserInfo(),
     },
     avatarUrl,
   )
@@ -146,81 +159,6 @@ const getUserInfo = (e: any) => {
 }
 // #endif
 
-// 个人资料
-const handleProfileInfo = () => {
-  uni.navigateTo({ url: `/pages/mine/info/index` })
-}
-// 账号安全
-const handlePassword = () => {
-  uni.navigateTo({ url: `/pages/mine/password/index` })
-}
-// 消息通知
-const handleInform = () => {
-  // uni.navigateTo({ url: `/pages/mine/inform/index` })
-  toast.success('功能开发中')
-}
-// 应用更新
-const handleAppUpdate = () => {
-  // #ifdef MP
-  // #ifndef MP-HARMONY
-  const updateManager = uni.getUpdateManager()
-  updateManager.onCheckForUpdate(function (res) {
-    // 请求完新版本信息的回调
-    // console.log(res.hasUpdate)
-    if (res.hasUpdate) {
-      toast.success('检测到新版本，正在下载中...')
-    } else {
-      toast.success('已是最新版本')
-    }
-  })
-  updateManager.onUpdateReady(function (res) {
-    uni.showModal({
-      title: '更新提示',
-      content: '新版本已经准备好，是否重启应用？',
-      success(res) {
-        if (res.confirm) {
-          // 新的版本已经下载好，调用 applyUpdate 应用新版本并重启
-          updateManager.applyUpdate()
-        }
-      },
-    })
-  })
-  updateManager.onUpdateFailed(function (res) {
-    // 新的版本下载失败
-    toast.error('新版本下载失败')
-  })
-  // #endif
-  // #endif
-
-  // #ifndef MP
-  toast.success('功能开发中')
-  // #endif
-}
-// 关于我们
-const handleAbout = () => {
-  uni.navigateTo({ url: `/pages/mine/about/index` })
-}
-// 清除缓存
-const handleClearCache = () => {
-  uni.showModal({
-    title: '清除缓存',
-    content: '确定要清除所有缓存吗？\n清除后需要重新登录',
-    success: (res) => {
-      if (res.confirm) {
-        try {
-          // 清除所有缓存
-          uni.clearStorageSync()
-          // 清除用户信息并跳转到登录页
-          useUserStore().logout()
-          toast.success('清除缓存成功')
-        } catch (err) {
-          console.error('清除缓存失败:', err)
-          toast.error('清除缓存失败')
-        }
-      }
-    },
-  })
-}
 // 退出登录
 const handleLogout = () => {
   uni.showModal({
@@ -229,7 +167,7 @@ const handleLogout = () => {
     success: (res) => {
       if (res.confirm) {
         // 清空用户信息
-        useUserStore().logout()
+        userStore.logout()
         hasLogin.value = false
         // 执行退出登录逻辑
         toast.success('退出登录成功')
@@ -250,40 +188,93 @@ const handleLogout = () => {
 <style lang="scss" scoped>
 /* 基础样式 */
 .profile-container {
+  min-height: 100vh;
+  background: linear-gradient(135deg, #f6f8fd 0%, #f1f4f9 100%);
+  position: relative;
   overflow: hidden;
-  font-family: -apple-system, BlinkMacSystemFont, 'Helvetica Neue', sans-serif;
-  background-color: #f7f8fa;
 }
+
+.bg-animation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  z-index: 1;
+
+  .circle {
+    position: absolute;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(1, 141, 113, 0.1), rgba(0, 184, 148, 0.1));
+    animation: float 8s infinite ease-in-out;
+  }
+
+  .circle-1 {
+    width: 250rpx;
+    height: 250rpx;
+    top: -80rpx;
+    right: -80rpx;
+    animation-delay: 0s;
+  }
+
+  .circle-2 {
+    width: 180rpx;
+    height: 180rpx;
+    bottom: 15%;
+    left: -40rpx;
+    animation-delay: -2s;
+  }
+
+  .circle-3 {
+    width: 220rpx;
+    height: 220rpx;
+    bottom: -70rpx;
+    right: 10%;
+    animation-delay: -4s;
+  }
+}
+
+.main-scroll {
+  position: relative;
+  z-index: 2;
+  height: 100vh;
+  padding: 30rpx;
+  box-sizing: border-box;
+}
+
 /* 用户信息区域 */
 .user-info-section {
   display: flex;
   align-items: center;
   padding: 40rpx;
-  margin: 30rpx 30rpx 20rpx;
-  background-color: #fff;
+  margin: 30rpx 0 20rpx;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
   border-radius: 24rpx;
-  box-shadow: 0 6rpx 20rpx rgba(0, 0, 0, 0.08);
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
 }
 
-.avatar-wrapper {
+.avatar-wrapper,
+.avatar-button {
   width: 160rpx;
   height: 160rpx;
   margin-right: 40rpx;
   overflow: hidden;
-  border: 4rpx solid #f5f5f5;
+  border: 4rpx solid rgba(255, 255, 255, 0.5);
   border-radius: 50%;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+  transition:
+    transform 0.3s ease,
+    box-shadow 0.3s ease;
+
+  &:active {
+    transform: scale(0.95);
+    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
+  }
 }
-.avatar-button {
-  height: 160rpx;
-  padding: 0;
-  margin-right: 40rpx;
-  overflow: hidden;
-  border: 4rpx solid #f5f5f5;
-  border-radius: 50%;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
-}
+
 .user-details {
   flex: 1;
 }
@@ -306,57 +297,88 @@ const handleLogout = () => {
   font-size: 24rpx;
   color: #999;
 }
-/* 功能区块 */
-.function-section {
-  padding: 0 20rpx;
-  margin-top: 20rpx;
+
+/* 额外信息区域 */
+.extra-info-section {
+  margin: 20rpx 0;
+  padding: 20rpx;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 24rpx;
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
 }
 
-.cell-group {
-  margin-bottom: 20rpx;
-  overflow: hidden;
-  background-color: #fff;
-  border-radius: 16rpx;
-  box-shadow: 0 2rpx 10rpx rgba(0, 0, 0, 0.05);
-}
-
-.group-title {
-  padding: 24rpx 30rpx 16rpx;
-  font-size: 30rpx;
-  font-weight: 500;
-  color: #999;
-  background-color: #fafafa;
-}
-
-:deep(.wd-cell) {
-  border-bottom: 1rpx solid #f5f5f5;
+.info-item {
+  display: flex;
+  align-items: center;
+  padding: 15rpx 0;
+  border-bottom: 1rpx solid rgba(0, 0, 0, 0.05);
 
   &:last-child {
     border-bottom: none;
   }
 
-  .wd-cell__title {
-    margin-left: 5px;
-    font-size: 32rpx;
-    color: #333;
+  .wd-icon {
+    margin-right: 15rpx;
   }
 
-  .cell-icon {
-    margin-right: 20rpx;
-    font-size: 36rpx;
+  .info-label {
+    font-size: 28rpx;
+    color: #666;
+    width: 100rpx;
+    flex-shrink: 0;
+  }
+
+  .info-value {
+    flex: 1;
+    font-size: 28rpx;
+    color: #333;
+    text-align: right;
   }
 }
+
 /* 退出登录按钮 */
 .logout-button-wrapper {
-  padding: 40rpx 30rpx;
+  padding: 40rpx 0;
 }
 
-:deep(.wd-button--danger) {
+:deep(.wd-button) {
   height: 88rpx;
   font-size: 32rpx;
   line-height: 88rpx;
-  color: #fff;
-  background-color: #f53f3f;
   border-radius: 44rpx;
+  transition: all 0.3s ease;
+
+  &.wd-button--error {
+    background: linear-gradient(135deg, #ff4757, #ff6b81);
+    color: #fff;
+    box-shadow: 0 8rpx 20rpx rgba(255, 71, 87, 0.2);
+
+    &:active {
+      transform: translateY(2rpx);
+      box-shadow: 0 4rpx 10rpx rgba(255, 71, 87, 0.3);
+    }
+  }
+
+  &.wd-button--primary {
+    background: linear-gradient(135deg, #018d71, #00b894);
+    color: #fff;
+    box-shadow: 0 8rpx 20rpx rgba(1, 141, 113, 0.2);
+
+    &:active {
+      transform: translateY(2rpx);
+      box-shadow: 0 4rpx 10rpx rgba(1, 141, 113, 0.3);
+    }
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20rpx);
+  }
 }
 </style>
