@@ -1,8 +1,18 @@
 <template>
   <view class="album-page">
+    <!-- 背景动画 -->
+    <view class="bg-animation">
+      <view class="circle circle-1"></view>
+      <view class="circle circle-2"></view>
+      <view class="circle circle-3"></view>
+    </view>
+
     <view class="header">
-      <view class="title">我的相册</view>
-      <view class="create-btn" @tap="handleCreateAlbum">
+      <view class="title-wrapper">
+        <text class="title">我的相册</text>
+        <text class="subtitle">记录美好时光</text>
+      </view>
+      <view class="create-btn" @tap="handleCreateAlbum" hover-class="btn-hover">
         <wd-icon name="add" size="20px" color="#ffffff"></wd-icon>
       </view>
     </view>
@@ -16,10 +26,11 @@
     >
       <view class="album-grid">
         <view
-          v-for="album in albums"
+          v-for="(album, index) in albums"
           :key="album.id"
           class="album-item"
           @tap="handleAlbumClick(album)"
+          :style="{ animationDelay: index * 0.1 + 's' }"
         >
           <view class="album-cover-wrapper">
             <image
@@ -37,11 +48,20 @@
                 <text class="count">{{ album.videoCount }}</text>
               </view>
             </view>
+            <view class="album-overlay">
+              <text class="view-more">查看详情</text>
+            </view>
           </view>
           <view class="album-info">
             <text class="album-title">{{ album.name }}</text>
             <text class="album-desc" v-if="album.description">{{ album.description }}</text>
-            <text class="update-time">{{ formatDate(album.updatedAt) }}</text>
+            <view class="album-footer">
+              <text class="update-time">{{ formatDate(album.updatedAt) }}</text>
+              <view class="album-size">
+                <wd-icon name="info" size="12px" color="#999999"></wd-icon>
+                <text>{{ formatSize(album.totalSize) }}</text>
+              </view>
+            </view>
           </view>
         </view>
       </view>
@@ -262,6 +282,19 @@ const onScrollToLower = () => {
   }
 }
 
+// 格式化文件大小
+const formatSize = (size: number) => {
+  if (size < 1024) {
+    return size + 'B'
+  } else if (size < 1024 * 1024) {
+    return (size / 1024).toFixed(1) + 'KB'
+  } else if (size < 1024 * 1024 * 1024) {
+    return (size / (1024 * 1024)).toFixed(1) + 'MB'
+  } else {
+    return (size / (1024 * 1024 * 1024)).toFixed(1) + 'GB'
+  }
+}
+
 onMounted(() => {
   fetchAlbums()
 })
@@ -270,21 +303,76 @@ onMounted(() => {
 <style lang="scss">
 .album-page {
   min-height: 100vh;
-  background-color: #f8f9fa;
+  background: linear-gradient(135deg, #f6f8fd 0%, #f1f4f9 100%);
   padding: 30rpx;
+  position: relative;
+  overflow: hidden;
+}
+
+.bg-animation {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  overflow: hidden;
+  z-index: 1;
+
+  .circle {
+    position: absolute;
+    border-radius: 50%;
+    background: linear-gradient(135deg, rgba(1, 141, 113, 0.1), rgba(0, 184, 148, 0.1));
+    animation: float 8s infinite ease-in-out;
+  }
+
+  .circle-1 {
+    width: 300rpx;
+    height: 300rpx;
+    top: -100rpx;
+    right: -100rpx;
+    animation-delay: 0s;
+  }
+
+  .circle-2 {
+    width: 200rpx;
+    height: 200rpx;
+    bottom: 20%;
+    left: -50rpx;
+    animation-delay: -2s;
+  }
+
+  .circle-3 {
+    width: 250rpx;
+    height: 250rpx;
+    bottom: -100rpx;
+    right: 20%;
+    animation-delay: -4s;
+  }
 }
 
 .header {
+  position: relative;
+  z-index: 2;
   display: flex;
   justify-content: space-between;
   align-items: center;
   margin-bottom: 40rpx;
   padding: 0 10rpx;
 
-  .title {
-    font-size: 40rpx;
-    font-weight: 600;
-    color: #333;
+  .title-wrapper {
+    .title {
+      font-size: 40rpx;
+      font-weight: 600;
+      color: #333;
+      display: block;
+    }
+
+    .subtitle {
+      font-size: 24rpx;
+      color: #666;
+      margin-top: 8rpx;
+      display: block;
+    }
   }
 
   .create-btn {
@@ -298,19 +386,18 @@ onMounted(() => {
     border-radius: 50%;
     box-shadow: 0 4rpx 12rpx rgba(1, 141, 113, 0.2);
     transition: all 0.3s ease;
+  }
 
-    &:active {
-      transform: scale(0.95);
-    }
-
-    .iconfont {
-      font-size: 40rpx;
-    }
+  .btn-hover {
+    transform: scale(0.95);
+    box-shadow: 0 2rpx 8rpx rgba(1, 141, 113, 0.15);
   }
 }
 
 .album-list {
-  height: calc(100vh - 140rpx);
+  position: relative;
+  z-index: 2;
+  height: calc(100vh - 180rpx);
 }
 
 .album-grid {
@@ -321,14 +408,25 @@ onMounted(() => {
 }
 
 .album-item {
-  background-color: #fff;
-  border-radius: 16rpx;
+  background-color: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(10px);
+  border-radius: 20rpx;
   overflow: hidden;
-  box-shadow: 0 4rpx 16rpx rgba(0, 0, 0, 0.06);
+  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
   transition: all 0.3s ease;
+  animation: slideUp 0.6s ease-out forwards;
+  opacity: 0;
 
   &:active {
     transform: scale(0.98);
+
+    .album-cover {
+      transform: scale(1.05);
+    }
+
+    .album-overlay {
+      opacity: 1;
+    }
   }
 }
 
@@ -341,7 +439,7 @@ onMounted(() => {
   .album-cover {
     width: 100%;
     height: 100%;
-    transition: transform 0.3s ease;
+    transition: transform 0.5s ease;
   }
 
   .album-stats {
@@ -355,6 +453,8 @@ onMounted(() => {
     font-size: 24rpx;
     display: flex;
     gap: 20rpx;
+    transform: translateY(0);
+    transition: transform 0.3s ease;
 
     .stat-item {
       display: flex;
@@ -363,14 +463,34 @@ onMounted(() => {
       background: rgba(0, 0, 0, 0.3);
       padding: 6rpx 12rpx;
       border-radius: 20rpx;
-
-      .iconfont {
-        font-size: 28rpx;
-      }
+      backdrop-filter: blur(4px);
 
       .count {
         font-size: 24rpx;
       }
+    }
+  }
+
+  .album-overlay {
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: rgba(0, 0, 0, 0.4);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+
+    .view-more {
+      color: #fff;
+      font-size: 28rpx;
+      padding: 12rpx 24rpx;
+      border: 2rpx solid #fff;
+      border-radius: 30rpx;
+      backdrop-filter: blur(4px);
     }
   }
 }
@@ -393,9 +513,23 @@ onMounted(() => {
     @extend .ellipsis-2 !optional;
   }
 
-  .update-time {
-    font-size: 24rpx;
-    color: #999;
+  .album-footer {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+
+    .update-time {
+      font-size: 24rpx;
+      color: #999;
+    }
+
+    .album-size {
+      display: flex;
+      align-items: center;
+      gap: 6rpx;
+      font-size: 24rpx;
+      color: #999;
+    }
   }
 }
 
@@ -541,6 +675,27 @@ onMounted(() => {
     gap: 10rpx;
     color: #999999;
     font-size: 24rpx;
+  }
+}
+
+@keyframes float {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-20rpx);
+  }
+}
+
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(30rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
   }
 }
 </style>
