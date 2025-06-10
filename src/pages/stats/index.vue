@@ -146,6 +146,7 @@
             v-for="(album, index) in albumStats"
             :key="album.id"
             :style="{ animationDelay: index * 0.1 + 's' }"
+            @tap="goToAlbumDetail(album.id)"
           >
             <view class="album-info">
               <text class="album-name">{{ album.name }}</text>
@@ -284,6 +285,12 @@ const fetchStats = async () => {
       icon: 'none',
     })
   }
+}
+
+const goToAlbumDetail = (id: number) => {
+  uni.navigateTo({
+    url: `/pages/album/detail?id=${id}`,
+  })
 }
 
 onMounted(() => {
