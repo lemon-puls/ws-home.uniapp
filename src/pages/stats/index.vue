@@ -39,15 +39,15 @@
             </view>
           </view>
           <view class="chart-content">
-            <view class="pie-chart">
-              <view
-                class="pie-segment image"
-                :style="{ transform: `rotate(${imagePercentage}deg)` }"
-              ></view>
-              <view
-                class="pie-segment video"
-                :style="{ transform: `rotate(${videoPercentage}deg)` }"
-              ></view>
+            <view
+              class="pie-chart"
+              :style="{
+                background: `conic-gradient(
+                #018d71 0% ${imagePercentage}%,
+                #ff9500 ${imagePercentage}% 100%
+              )`,
+              }"
+            >
               <view class="pie-center">
                 <text class="total-count">{{ stats.totalMedia }}</text>
                 <text class="total-label">总文件数</text>
@@ -438,22 +438,6 @@ onMounted(() => {
       border-radius: 50%;
       background: #f5f5f5;
 
-      .pie-segment {
-        position: absolute;
-        width: 100%;
-        height: 100%;
-        border-radius: 50%;
-        clip-path: polygon(50% 50%, 50% 0, 100% 0, 100% 100%, 0 100%, 0 0, 50% 0);
-
-        &.image {
-          background: linear-gradient(135deg, #018d71, #00b894);
-        }
-
-        &.video {
-          background: linear-gradient(135deg, #ff9500, #ffb142);
-        }
-      }
-
       .pie-center {
         position: absolute;
         top: 50%;
@@ -468,6 +452,7 @@ onMounted(() => {
         align-items: center;
         justify-content: center;
         box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+        z-index: 2;
 
         .total-count {
           font-size: 28rpx;
