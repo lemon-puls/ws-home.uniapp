@@ -78,31 +78,66 @@
 </template>
 
 <script lang="ts" setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
+import { Service } from '@/api'
 
 // 展示图片数据
-const showcasePhotos = ref([
-  {
-    url: '/static/showcase/photo1.jpg',
-    title: '春日花语',
-    description: '记录春天的美好时光',
-  },
-  {
-    url: '/static/showcase/photo2.jpg',
-    title: '夏日海滩',
-    description: '阳光、沙滩、海浪',
-  },
-  {
-    url: '/static/showcase/photo3.jpg',
-    title: '秋日落叶',
-    description: '金黄的季节',
-  },
-  {
-    url: '/static/showcase/photo4.jpg',
-    title: '冬日雪景',
-    description: '银装素裹的世界',
-  },
-])
+const showcasePhotos = ref<
+  Array<{
+    url: string
+    title: string
+    description: string
+  }>
+>([])
+
+// 预设的标题和描述
+const presetTitles = [
+  '春日花语',
+  '夏日海滩',
+  '秋日落叶',
+  '冬日雪景',
+  '城市掠影',
+  '自然风光',
+  '生活点滴',
+  '旅行记忆',
+]
+
+const presetDescriptions = [
+  '记录美好的时光',
+  '阳光、沙滩、海浪',
+  '金黄的季节',
+  '银装素裹的世界',
+  '城市的繁华与宁静',
+  '大自然的鬼斧神工',
+  '生活中的小确幸',
+  '旅途中的精彩瞬间',
+]
+
+// 获取随机展示图片
+const fetchShowcasePhotos = async () => {
+  try {
+    const res = (await Service.getAlbumMediaRandom()) as unknown as IResData<string[]>
+    if (res.code === 0 && res.data) {
+      // 将URL数组转换为带有标题和描述的对象数组
+      showcasePhotos.value = res.data.map((url, index) => ({
+        url,
+        title: presetTitles[index % presetTitles.length],
+        description: presetDescriptions[index % presetDescriptions.length],
+      }))
+    }
+  } catch (error) {
+    console.error('获取展示图片失败:', error)
+    uni.showToast({
+      title: '获取展示图片失败',
+      icon: 'none',
+    })
+  }
+}
+
+// 页面加载时获取展示图片
+onMounted(() => {
+  fetchShowcasePhotos()
+})
 
 const navigateToAlbum = () => {
   uni.navigateTo({
@@ -235,7 +270,8 @@ const navigateToAlbum = () => {
   }
 
   .swiper-item {
-    padding: 10rpx;
+    width: 100%;
+    height: 100%;
   }
 
   .photo-card {
@@ -250,6 +286,7 @@ const navigateToAlbum = () => {
     .photo-image {
       width: 100%;
       height: 100%;
+      object-fit: cover;
       transition: transform 0.3s ease;
     }
 
@@ -261,8 +298,8 @@ const navigateToAlbum = () => {
       padding: 30rpx;
       background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
       color: #fff;
-      transform: translateY(100%);
-      transition: transform 0.3s ease;
+      transform: translateY(0);
+      transition: all 0.3s ease;
 
       .photo-title {
         font-size: 32rpx;
@@ -278,13 +315,9 @@ const navigateToAlbum = () => {
       }
     }
 
-    &:hover {
+    &:active {
       .photo-image {
         transform: scale(1.05);
-      }
-
-      .photo-info {
-        transform: translateY(0);
       }
     }
   }
