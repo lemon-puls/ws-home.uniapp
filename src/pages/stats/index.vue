@@ -94,21 +94,39 @@
             </view>
           </view>
           <view class="chart-content">
-            <view class="bar-chart">
-              <view class="bar-group">
-                <view class="bar-label">图片</view>
-                <view class="bar-container">
-                  <view class="bar image" :style="{ width: imageSizePercentage + '%' }">
-                    <text class="bar-value">{{ formatSize(stats.imageSize) }}</text>
-                  </view>
+            <view
+              class="pie-chart"
+              :style="{
+                background: `conic-gradient(
+                #018d71 0% ${imageSizePercentage}%,
+                #ff9500 ${imageSizePercentage}% 100%
+              )`,
+              }"
+            >
+              <view class="pie-center">
+                <text class="total-count">{{ formatSize(stats.totalSize) }}</text>
+                <text class="total-label">总存储空间</text>
+              </view>
+            </view>
+            <view class="chart-details">
+              <view class="detail-item">
+                <view class="detail-label">
+                  <view class="dot image"></view>
+                  <text>图片</text>
+                </view>
+                <view class="detail-value">
+                  <text class="count">{{ formatSize(stats.imageSize) }}</text>
+                  <text class="percentage">{{ imageSizePercentage }}%</text>
                 </view>
               </view>
-              <view class="bar-group">
-                <view class="bar-label">视频</view>
-                <view class="bar-container">
-                  <view class="bar video" :style="{ width: videoSizePercentage + '%' }">
-                    <text class="bar-value">{{ formatSize(stats.videoSize) }}</text>
-                  </view>
+              <view class="detail-item">
+                <view class="detail-label">
+                  <view class="dot video"></view>
+                  <text>视频</text>
+                </view>
+                <view class="detail-value">
+                  <text class="count">{{ formatSize(stats.videoSize) }}</text>
+                  <text class="percentage">{{ videoSizePercentage }}%</text>
                 </view>
               </view>
             </view>
@@ -119,7 +137,7 @@
       <!-- 相册空间占用列表 -->
       <view class="album-list">
         <view class="list-header">
-          <text class="list-title">相册空间占用</text>
+          <text class="list-title">相册文件分布</text>
           <text class="list-subtitle">共 {{ stats.totalAlbums }} 个相册</text>
         </view>
         <view class="list-content">
@@ -135,15 +153,19 @@
                 <text class="album-count">
                   {{ album.photoCount }}个图片，{{ album.videoCount }}个视频
                 </text>
-                <view class="album-progress">
-                  <view
-                    class="progress-bar"
-                    :style="{ width: (album.photoSize / stats.imageSize) * 100 + '%' }"
-                  ></view>
-                </view>
+                <view class="album-size">{{ formatSize(album.totalSize) }}</view>
               </view>
             </view>
-            <view class="album-size">{{ formatSize(album.photoSize + album.videoSize) }}</view>
+            <view class="progress-labels">
+              <text class="progress-label image">图片 {{ formatSize(album.photoSize) }}</text>
+              <text class="progress-label video">视频 {{ formatSize(album.videoSize) }}</text>
+            </view>
+            <view
+              class="progress-bar-bg"
+              :style="{
+                background: `linear-gradient(90deg, #018d71 0%, #018d71 ${((album.photoSize / (album.photoSize + album.videoSize)) * 100).toFixed(2)}%, #ff9500 ${((album.photoSize / (album.photoSize + album.videoSize)) * 100).toFixed(2)}%, #ff9500 100%)`,
+              }"
+            ></view>
           </view>
         </view>
       </view>
@@ -597,53 +619,60 @@ onMounted(() => {
 
   .album-item {
     display: flex;
-    justify-content: space-between;
+    flex-direction: column;
+    padding: 20rpx 24rpx 16rpx 24rpx;
+    background: #fff;
+    border-radius: 16rpx;
+    margin-bottom: 18rpx;
+    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.03);
+  }
+
+  .album-info {
+    display: flex;
     align-items: center;
-    padding: 15rpx 0;
-    border-bottom: 2rpx solid rgba(0, 0, 0, 0.05);
-    animation: slideUp 0.6s ease-out forwards;
-    opacity: 0;
+    justify-content: space-between;
+  }
 
-    &:last-child {
-      border-bottom: none;
-    }
+  .album-meta {
+    display: flex;
+    flex-direction: column;
+    align-items: flex-end;
+  }
 
-    .album-info {
-      flex: 1;
-      margin-right: 15rpx;
+  .progress-labels {
+    display: flex;
+    justify-content: space-between;
+    font-size: 20rpx;
+    margin: 8rpx 0 4rpx 0;
+    padding: 0 2rpx;
+  }
 
-      .album-name {
-        font-size: 26rpx;
-        color: #333;
-        margin-bottom: 10rpx;
-      }
+  .progress-bar-bg {
+    width: 100%;
+    height: 12rpx;
+    border-radius: 8rpx;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 8rpx;
+  }
 
-      .album-meta {
-        .album-count {
-          font-size: 22rpx;
-          color: #666;
-          margin-bottom: 6rpx;
-        }
+  .album-size {
+    font-size: 24rpx;
+    color: #666;
+    margin-left: 24rpx;
+    white-space: nowrap;
+  }
 
-        .album-progress {
-          height: 4rpx;
-          background: #f5f5f5;
-          border-radius: 2rpx;
-          overflow: hidden;
+  .album-name {
+    font-size: 28rpx;
+    font-weight: bold;
+    color: #222;
+    margin-right: 16rpx;
+  }
 
-          .progress-bar {
-            height: 100%;
-            background: linear-gradient(135deg, #018d71, #00b894);
-            transition: width 0.6s ease-out;
-          }
-        }
-      }
-    }
-
-    .album-size {
-      font-size: 24rpx;
-      color: #666;
-    }
+  .album-count {
+    font-size: 22rpx;
+    color: #888;
   }
 }
 
