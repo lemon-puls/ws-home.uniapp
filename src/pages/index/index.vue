@@ -31,6 +31,9 @@
         <view class="showcase-title">
           <text class="title">精选回忆</text>
           <text class="subtitle">记录美好瞬间</text>
+          <view class="refresh-btn" @tap="handleRefresh">
+            <text>🔄</text>
+          </view>
         </view>
         <swiper
           class="photo-swiper"
@@ -144,6 +147,15 @@ const navigateToAlbum = () => {
     url: '/pages/album/index',
   })
 }
+
+// 处理刷新
+const handleRefresh = async () => {
+  uni.showLoading({
+    title: '刷新中...',
+  })
+  await fetchShowcasePhotos()
+  uni.hideLoading()
+}
 </script>
 
 <style lang="scss">
@@ -246,6 +258,9 @@ const navigateToAlbum = () => {
   .showcase-title {
     margin-bottom: 30rpx;
     padding: 0 20rpx;
+    display: flex;
+    align-items: center;
+    position: relative;
 
     .title {
       font-size: 36rpx;
@@ -259,6 +274,20 @@ const navigateToAlbum = () => {
       font-size: 24rpx;
       color: #666;
       display: block;
+    }
+
+    .refresh-btn {
+      position: absolute;
+      right: 20rpx;
+      top: 50%;
+      transform: translateY(-50%);
+      padding: 10rpx;
+      font-size: 36rpx;
+      line-height: 1;
+
+      &:active {
+        opacity: 0.7;
+      }
     }
   }
 
