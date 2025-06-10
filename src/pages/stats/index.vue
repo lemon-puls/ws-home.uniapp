@@ -130,18 +130,20 @@
             :style="{ animationDelay: index * 0.1 + 's' }"
           >
             <view class="album-info">
-              <text class="album-name">{{ album.title }}</text>
+              <text class="album-name">{{ album.name }}</text>
               <view class="album-meta">
-                <text class="album-count">{{ album.mediaCount }}个文件</text>
+                <text class="album-count">
+                  {{ album.photoCount }}个图片，{{ album.videoCount }}个视频
+                </text>
                 <view class="album-progress">
                   <view
                     class="progress-bar"
-                    :style="{ width: (album.size / stats.totalSize) * 100 + '%' }"
+                    :style="{ width: (album.photoSize / stats.imageSize) * 100 + '%' }"
                   ></view>
                 </view>
               </view>
             </view>
-            <view class="album-size">{{ formatSize(album.size) }}</view>
+            <view class="album-size">{{ formatSize(album.photoSize + album.videoSize) }}</view>
           </view>
         </view>
       </view>
@@ -154,14 +156,28 @@ import { ref, computed, onMounted } from 'vue'
 import type { AlbumStats } from '@/types/album'
 import { formatSize } from '@/utils/format'
 import { usePageAuth } from '@/hooks/usePageAuth'
+import { Service } from '@/api'
 
 usePageAuth()
 
 interface AlbumStat {
-  id: string
-  title: string
-  mediaCount: number
-  size: number
+  id: number
+  name: string
+  photoCount: number
+  videoCount: number
+  photoSize: number
+  videoSize: number
+  totalSize: number
+}
+
+interface AlbumStatsResponse {
+  totalAlbums: number
+  totalPhotos: number
+  totalVideos: number
+  totalSize: number
+  photoSize: number
+  videoSize: number
+  albums: AlbumStat[]
 }
 
 const stats = ref<AlbumStats>({
@@ -175,25 +191,6 @@ const stats = ref<AlbumStats>({
 })
 
 const albumStats = ref<AlbumStat[]>([])
-
-// 模拟数据
-const mockStatsData: AlbumStats = {
-  totalAlbums: 15,
-  totalMedia: 1200,
-  totalSize: 500 * 1024 * 1024 * 1024, // 500GB
-  imageCount: 900,
-  videoCount: 300,
-  imageSize: 350 * 1024 * 1024 * 1024, // 350GB
-  videoSize: 150 * 1024 * 1024 * 1024, // 150GB
-}
-
-const mockAlbumStatsData: AlbumStat[] = [
-  { id: '1', title: '旅行记忆', mediaCount: 300, size: 100 * 1024 * 1024 * 1024 },
-  { id: '2', title: '生活点滴', mediaCount: 500, size: 200 * 1024 * 1024 * 1024 },
-  { id: '3', title: '工作文档', mediaCount: 100, size: 20 * 1024 * 1024 * 1024 },
-  { id: '4', title: '美食之旅', mediaCount: 150, size: 80 * 1024 * 1024 * 1024 },
-  { id: '5', title: '运动瞬间', mediaCount: 150, size: 100 * 1024 * 1024 * 1024 },
-]
 
 // 计算百分比
 const imagePercentage = computed(() => {
@@ -234,7 +231,7 @@ const statsCards = computed(() => [
   },
   {
     title: '存储空间',
-    value: formatSize(stats.value.totalSize),
+    value: formatSize(stats.value.totalSize), // 直接使用MB单位
     icon: 'info',
     color: '#2e86de',
     gradient: 'linear-gradient(135deg, rgba(46, 134, 222, 0.1), rgba(84, 160, 255, 0.1))',
@@ -244,9 +241,22 @@ const statsCards = computed(() => [
 // 获取统计数据
 const fetchStats = async () => {
   try {
-    // TODO: 调用API获取统计数据
-    stats.value = mockStatsData // 使用模拟数据
+    const res = (await Service.getAlbumStats()) as unknown as IResData<AlbumStatsResponse>
+    if (res.code === 0 && res.data) {
+      const data = res.data
+      stats.value = {
+        totalAlbums: data.totalAlbums,
+        totalMedia: data.totalPhotos + data.totalVideos,
+        totalSize: data.totalSize, // 直接使用MB单位
+        imageCount: data.totalPhotos,
+        videoCount: data.totalVideos,
+        imageSize: data.photoSize, // 直接使用MB单位
+        videoSize: data.videoSize, // 直接使用MB单位
+      }
+      albumStats.value = data.albums
+    }
   } catch (error) {
+    console.error('获取统计数据失败:', error)
     uni.showToast({
       title: '获取统计数据失败',
       icon: 'none',
@@ -254,22 +264,8 @@ const fetchStats = async () => {
   }
 }
 
-// 获取相册统计
-const fetchAlbumStats = async () => {
-  try {
-    // TODO: 调用API获取相册统计
-    albumStats.value = mockAlbumStatsData // 使用模拟数据
-  } catch (error) {
-    uni.showToast({
-      title: '获取相册统计失败',
-      icon: 'none',
-    })
-  }
-}
-
 onMounted(() => {
   fetchStats()
-  fetchAlbumStats()
 })
 </script>
 
