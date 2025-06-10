@@ -151,6 +151,18 @@ export class Service {
     })
   }
   /**
+   * 获取随机图片
+   * 从用户所有相册中随机选择5张图片
+   * @returns void
+   * @throws ApiError
+   */
+  public static getAlbumMediaRandom(): CancelablePromise<void> {
+    return __request(OpenAPI, {
+      method: 'GET',
+      url: '/album/media/random',
+    })
+  }
+  /**
    * 更新所有图片大小
    * 从COS获取并更新所有图片的实际大小(MB)
    * @returns void
