@@ -608,7 +608,7 @@ const handleUpload = async () => {
 
         return {
           url: downloadRes.data.url,
-          size: file.size,
+          size: Number((file.size / 1024 / 1024).toFixed(2)), // 转换为MB并保留两位小数
           type: mediaType,
           is_raw: false,
           meta: mediaMeta,

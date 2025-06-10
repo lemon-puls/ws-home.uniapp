@@ -268,15 +268,16 @@ const handleAgreement = (type: 'user' | 'privacy') => {
   }
 
   .captcha-image {
-    width: 100px;
-    height: 36px;
-    margin-left: 10px;
-    border-radius: 8px;
+    width: 140rpx;
+    height: 44rpx;
+    margin-left: 20rpx;
+    border-radius: 8rpx;
     cursor: pointer;
-    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
-    transition: all 0.3s ease;
+    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.08);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     position: relative;
     overflow: hidden;
+    border: 1px solid rgba(255, 255, 255, 0.8);
 
     &::after {
       content: '';
@@ -285,14 +286,14 @@ const handleAgreement = (type: 'user' | 'privacy') => {
       left: 0;
       right: 0;
       bottom: 0;
-      background: linear-gradient(to bottom, rgba(255, 255, 255, 0.1), transparent);
+      background: linear-gradient(to bottom, rgba(255, 255, 255, 0.2), transparent);
       pointer-events: none;
     }
 
     &:active {
       opacity: 0.8;
       transform: scale(0.96);
-      box-shadow: 0 1px 4px rgba(0, 0, 0, 0.1);
+      box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.06);
     }
   }
 }
@@ -302,13 +303,8 @@ const handleAgreement = (type: 'user' | 'privacy') => {
   display: flex;
   flex-direction: column;
   min-height: 100vh;
-  padding: 0 70rpx;
-  background-color: #ffffff;
-  background-image: linear-gradient(
-    135deg,
-    rgba(25, 137, 250, 0.05) 0%,
-    rgba(255, 255, 255, 0) 100%
-  );
+  padding: 0 50rpx;
+  background: linear-gradient(135deg, #f6f9fc 0%, #eef2f7 100%);
   position: relative;
   overflow: hidden;
 }
@@ -317,9 +313,11 @@ const handleAgreement = (type: 'user' | 'privacy') => {
 .bg-decoration {
   position: absolute;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(25, 137, 250, 0.05), rgba(25, 137, 250, 0.1));
+  background: linear-gradient(135deg, rgba(147, 197, 255, 0.15), rgba(255, 179, 235, 0.15));
   z-index: 0;
   pointer-events: none;
+  animation: float-effect 15s infinite ease-in-out;
+  backdrop-filter: blur(10px);
 }
 
 .bg-circle-1 {
@@ -328,14 +326,16 @@ const handleAgreement = (type: 'user' | 'privacy') => {
   top: -200rpx;
   right: -200rpx;
   opacity: 0.6;
+  animation-delay: 0s;
 }
 
 .bg-circle-2 {
   width: 400rpx;
   height: 400rpx;
-  bottom: 10%;
-  left: -200rpx;
+  bottom: 15%;
+  left: -150rpx;
   opacity: 0.4;
+  animation-delay: -5s;
 }
 
 .bg-circle-3 {
@@ -344,7 +344,8 @@ const handleAgreement = (type: 'user' | 'privacy') => {
   bottom: -100rpx;
   right: 10%;
   opacity: 0.3;
-  background: linear-gradient(135deg, rgba(7, 193, 96, 0.05), rgba(7, 193, 96, 0.1));
+  background: linear-gradient(135deg, rgba(255, 223, 186, 0.15), rgba(186, 255, 223, 0.15));
+  animation-delay: -10s;
 }
 
 .login-header {
@@ -353,50 +354,56 @@ const handleAgreement = (type: 'user' | 'privacy') => {
   align-items: center;
   justify-content: center;
   margin-top: 120rpx;
-  animation: fadeInDown 0.8s ease-out;
+  animation: slideInTop 1s cubic-bezier(0.4, 0, 0.2, 1);
 
   .login-logo {
     width: 200rpx;
     height: 200rpx;
-    border-radius: 36rpx;
-    box-shadow: 0 10rpx 30rpx rgba(0, 0, 0, 0.12);
-    transition: all 0.3s ease;
+    border-radius: 40rpx;
+    box-shadow: 0 15rpx 50rpx rgba(0, 0, 0, 0.1);
+    transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+    transform-origin: center;
 
     &:active {
-      transform: scale(0.95);
-      box-shadow: 0 6rpx 15rpx rgba(0, 0, 0, 0.1);
+      transform: scale(0.92) rotate(-5deg);
+      box-shadow: 0 8rpx 30rpx rgba(0, 0, 0, 0.08);
     }
   }
 
   .login-title {
     margin-top: 30rpx;
     font-size: 46rpx;
-    font-weight: bold;
-    color: #333333;
-    letter-spacing: 3rpx;
-    text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.05);
+    font-weight: 600;
+    background: linear-gradient(135deg, #333333, #666666);
+    -webkit-background-clip: text;
+    color: transparent;
+    letter-spacing: 2rpx;
+    text-shadow: 0 4rpx 10rpx rgba(0, 0, 0, 0.05);
   }
 }
 
 .login-form {
   flex: 1;
-  margin-top: 70rpx;
-  animation: fadeIn 0.8s ease-out 0.2s both;
+  margin-top: 80rpx;
+  animation: fadeInScale 1s cubic-bezier(0.4, 0, 0.2, 1) 0.2s both;
 
   .welcome-text {
-    margin-bottom: 16rpx;
+    margin-bottom: 15rpx;
     font-size: 48rpx;
-    font-weight: bold;
-    color: #333333;
+    font-weight: 600;
+    background: linear-gradient(135deg, #333333, #666666);
+    -webkit-background-clip: text;
+    color: transparent;
     text-align: center;
     letter-spacing: 1rpx;
   }
 
   .login-desc {
-    margin-bottom: 70rpx;
+    margin-bottom: 60rpx;
     font-size: 28rpx;
     color: #888888;
     text-align: center;
+    letter-spacing: 0.5rpx;
   }
 
   .login-input-group {
@@ -406,67 +413,118 @@ const handleAgreement = (type: 'user' | 'privacy') => {
 
     .input-wrapper {
       position: relative;
-      margin-bottom: 50rpx;
-      transition: all 0.3s ease;
+      margin-bottom: 45rpx;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       border-radius: 16rpx;
       overflow: hidden;
+      background-color: rgba(255, 255, 255, 0.95);
+      box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.04);
+      backdrop-filter: blur(10px);
+      border: 1px solid rgba(255, 255, 255, 0.8);
 
       &:last-child {
         margin-bottom: 0;
       }
 
       .login-input {
-        padding: 12rpx 20rpx;
-        background-color: rgba(245, 247, 250, 0.7);
-        border-radius: 16rpx;
-        transition: all 0.3s ease;
+        padding: 24rpx 40rpx;
+        transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
 
         :deep(.wd-input__inner) {
           font-size: 30rpx;
           color: #333333;
+          letter-spacing: 0.5rpx;
+          padding-left: 20rpx;
+          transition: all 0.3s ease;
+          height: 44rpx;
+          line-height: 44rpx;
+
+          &::placeholder {
+            color: #999999;
+            font-size: 28rpx;
+            transition: all 0.3s ease;
+          }
         }
 
-        :deep(.wd-input__placeholder) {
-          font-size: 28rpx;
-          color: #aaaaaa;
+        :deep(.wd-input__prefix) {
+          margin-right: 30rpx;
+          color: #999999;
+          transition: all 0.3s ease;
+          font-size: 36rpx;
+          display: flex;
+          align-items: center;
+          height: 44rpx;
+        }
+
+        :deep(.wd-input__suffix) {
+          margin-left: 30rpx;
+          padding-left: 20rpx;
+          display: flex;
+          align-items: center;
+          height: 44rpx;
         }
 
         &:focus-within {
-          background-color: rgba(245, 247, 250, 0.95);
-          box-shadow: 0 6rpx 16rpx rgba(0, 0, 0, 0.06);
-          transform: translateY(-3rpx);
+          background-color: rgba(255, 255, 255, 0.98);
+          box-shadow: 0 12rpx 32rpx rgba(0, 0, 0, 0.08);
+          transform: translateY(-6rpx);
+
+          :deep(.wd-input__inner) {
+            color: #333333;
+
+            &::placeholder {
+              color: #bbbbbb;
+              transform: translateX(10rpx);
+            }
+          }
+
+          :deep(.wd-input__prefix) {
+            color: #1989fa;
+            transform: scale(1.1);
+          }
+        }
+
+        &:hover {
+          background-color: rgba(255, 255, 255, 0.98);
+          box-shadow: 0 8rpx 28rpx rgba(0, 0, 0, 0.06);
         }
       }
 
       .input-bottom-line {
         position: absolute;
-        bottom: -2rpx;
-        left: 5%;
-        width: 90%;
-        height: 2rpx;
-        background: linear-gradient(
-          to right,
-          transparent,
-          var(--wot-color-theme, #1989fa),
-          transparent
-        );
-        transition: transform 0.4s ease;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 3rpx;
+        background: linear-gradient(to right, #a6c1ee, #fbc2eb);
+        transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         transform: scaleX(0);
-        opacity: 0.8;
+        opacity: 0.9;
+        transform-origin: left;
       }
 
       &:focus-within .input-bottom-line {
         transform: scaleX(1);
+        height: 4rpx;
+        box-shadow: 0 0 8rpx rgba(251, 194, 235, 0.4);
       }
 
-      .input-icon {
-        margin-right: 16rpx;
-        color: #666666;
-        transition: color 0.3s ease;
+      &::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
+        opacity: 0;
+        transition: opacity 0.3s ease;
+        pointer-events: none;
       }
 
-      &:focus-within .input-icon {
-        color: var(--wot-color-theme, #1989fa);
+      &:focus-within::before {
+        opacity: 1;
       }
     }
   }
@@ -474,50 +532,66 @@ const handleAgreement = (type: 'user' | 'privacy') => {
   .login-buttons {
     display: flex;
     flex-direction: column;
-    gap: 36rpx;
+    gap: 35rpx;
 
     .account-login-btn {
       height: 96rpx;
-      margin-top: 20rpx;
+      margin-top: 15rpx;
       font-size: 32rpx;
       font-weight: 500;
-      letter-spacing: 2rpx;
+      letter-spacing: 1rpx;
       border-radius: 48rpx;
-      box-shadow: 0 10rpx 20rpx rgba(25, 137, 250, 0.25);
-      transition: all 0.3s ease;
+      background: linear-gradient(135deg, #a6c1ee 0%, #fbc2eb 100%);
+      box-shadow: 0 12rpx 30rpx rgba(251, 194, 235, 0.3);
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       align-items: center;
       justify-content: center;
+      color: #fff;
+      position: relative;
+      overflow: hidden;
 
-      .login-icon {
-        margin-right: 8rpx;
-        opacity: 0.8;
-        transition: all 0.3s ease;
+      &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
+        opacity: 0;
+        transition: opacity 0.4s ease;
       }
 
       &:active {
-        box-shadow: 0 5rpx 10rpx rgba(25, 137, 250, 0.2);
-        transform: scale(0.98);
+        transform: scale(0.97) translateY(2rpx);
+        box-shadow: 0 6rpx 20rpx rgba(251, 194, 235, 0.2);
 
-        .login-icon {
-          transform: translateX(3rpx);
+        &::after {
+          opacity: 1;
         }
+      }
+
+      .login-icon {
+        margin-right: 8rpx;
+        opacity: 0.9;
+        transition: all 0.4s ease;
       }
     }
 
     .divider {
       display: flex;
       align-items: center;
-      margin: 24rpx 0;
+      margin: 25rpx 0;
 
       .divider-line {
         flex: 1;
         height: 1px;
-        background-color: #eeeeee;
+        background: linear-gradient(to right, transparent, #e0e0e0, transparent);
       }
 
       .divider-text {
-        padding: 0 24rpx;
+        padding: 0 25rpx;
         font-size: 24rpx;
         color: #999999;
       }
@@ -529,15 +603,30 @@ const handleAgreement = (type: 'user' | 'privacy') => {
       color: #07c160;
       border-color: #07c160;
       border-radius: 48rpx;
-      transition: all 0.3s ease;
+      transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+      background-color: rgba(7, 193, 96, 0.05);
+      position: relative;
+      overflow: hidden;
 
-      .wechat-icon {
-        margin-right: 12rpx;
+      &::after {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        background: linear-gradient(135deg, rgba(255, 255, 255, 0.2), transparent);
+        opacity: 0;
+        transition: opacity 0.4s ease;
       }
 
       &:active {
+        transform: scale(0.97) translateY(2rpx);
         background-color: rgba(7, 193, 96, 0.08);
-        transform: scale(0.98);
+
+        &::after {
+          opacity: 1;
+        }
       }
     }
   }
@@ -546,28 +635,51 @@ const handleAgreement = (type: 'user' | 'privacy') => {
 .privacy-agreement {
   display: flex;
   justify-content: center;
-  margin: 30rpx 0 40rpx;
-  animation: fadeIn 0.8s ease-out 0.4s both;
+  margin: 30rpx 0 35rpx;
+  animation: fadeIn 1s cubic-bezier(0.4, 0, 0.2, 1) 0.4s both;
 
   .privacy-checkbox {
     display: flex;
     align-items: center;
+
+    :deep(.wd-checkbox__label) {
+      font-size: 26rpx;
+    }
   }
 
   .agreement-text {
     font-size: 26rpx;
     line-height: 1.6;
-    color: #666666;
+    color: #888888;
 
     .agreement-link {
       padding: 0 4rpx;
       font-weight: 500;
-      color: var(--wot-color-theme, #1989fa);
-      transition: all 0.3s ease;
+      color: #6699ff;
+      transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+      position: relative;
+
+      &::after {
+        content: '';
+        position: absolute;
+        bottom: 0;
+        left: 0;
+        width: 100%;
+        height: 1px;
+        background-color: currentColor;
+        transform: scaleX(0);
+        transition: transform 0.3s ease;
+        transform-origin: right;
+      }
 
       &:active {
         opacity: 0.8;
         transform: scale(0.98);
+
+        &::after {
+          transform: scaleX(1);
+          transform-origin: left;
+        }
       }
     }
   }
@@ -578,20 +690,49 @@ const handleAgreement = (type: 'user' | 'privacy') => {
   margin-top: auto;
 }
 
-/* 添加动画效果 */
-@keyframes fadeIn {
-  from {
-    opacity: 0;
+/* 优化动画效果 */
+@keyframes float-effect {
+  0%,
+  100% {
+    transform: translateY(0) translateX(0) rotate(0deg) scale(1);
   }
-  to {
-    opacity: 1;
+  25% {
+    transform: translateY(-30rpx) translateX(30rpx) rotate(5deg) scale(1.05);
+  }
+  50% {
+    transform: translateY(0) translateX(0) rotate(0deg) scale(1);
+  }
+  75% {
+    transform: translateY(30rpx) translateX(-30rpx) rotate(-5deg) scale(0.95);
   }
 }
 
-@keyframes fadeInDown {
+@keyframes slideInTop {
   from {
     opacity: 0;
-    transform: translateY(-20px);
+    transform: translateY(-60rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fadeInScale {
+  from {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20rpx);
   }
   to {
     opacity: 1;
