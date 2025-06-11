@@ -153,7 +153,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, onUnmounted } from 'vue'
 import { Service } from '@/api/services/Service'
 import { formatDate } from '@/utils/date'
 import { usePageAuth } from '@/hooks/usePageAuth'
@@ -273,11 +273,9 @@ const resetList = () => {
 
 // 创建相册
 const handleCreateAlbum = () => {
-  newAlbum.value = {
-    title: '',
-    description: '',
-  }
-  showCreatePopup.value = true
+  uni.navigateTo({
+    url: '/pages/album/edit',
+  })
 }
 
 // 确认创建
@@ -351,11 +349,9 @@ const closeActionMenu = () => {
 // 处理编辑
 const handleEdit = () => {
   if (!currentAlbum.value) return
-  editAlbum.value = {
-    title: currentAlbum.value.name,
-    description: currentAlbum.value.description,
-  }
-  showEditPopup.value = true
+  uni.navigateTo({
+    url: `/pages/album/edit?id=${currentAlbum.value.id}`,
+  })
   closeActionMenu()
 }
 
@@ -445,6 +441,15 @@ const handleDelete = () => {
 
 onMounted(() => {
   fetchAlbums()
+  // 监听刷新事件
+  uni.$on('refreshAlbumList', () => {
+    resetList()
+  })
+})
+
+// 在组件卸载时移除事件监听
+onUnmounted(() => {
+  uni.$off('refreshAlbumList')
 })
 </script>
 
