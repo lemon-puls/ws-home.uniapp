@@ -39,13 +39,19 @@
               class="album-cover"
             />
             <view class="album-stats">
-              <view class="stat-item">
-                <wd-icon name="image" size="14px" color="#ffffff"></wd-icon>
-                <text class="count">{{ album.photoCount }}</text>
+              <view class="stats-left">
+                <view class="stat-item">
+                  <wd-icon name="image" size="14px" color="#ffffff"></wd-icon>
+                  <text class="count">{{ album.photoCount }}</text>
+                </view>
+                <view class="stat-item">
+                  <wd-icon name="video" size="14px" color="#ffffff"></wd-icon>
+                  <text class="count">{{ album.videoCount }}</text>
+                </view>
               </view>
               <view class="stat-item">
-                <wd-icon name="video" size="14px" color="#ffffff"></wd-icon>
-                <text class="count">{{ album.videoCount }}</text>
+                <wd-icon name="info" size="14px" color="#ffffff"></wd-icon>
+                <text class="count">{{ formatSize(album.totalSize) }}</text>
               </view>
             </view>
             <view class="album-overlay">
@@ -57,10 +63,6 @@
             <text class="album-desc" v-if="album.description">{{ album.description }}</text>
             <view class="album-footer">
               <text class="update-time">{{ formatDate(album.updatedAt) }}</text>
-              <view class="album-size">
-                <wd-icon name="info" size="12px" color="#999999"></wd-icon>
-                <text>{{ formatSize(album.totalSize) }}</text>
-              </view>
             </view>
           </view>
         </view>
@@ -112,6 +114,7 @@ import { ref, onMounted } from 'vue'
 import { Service } from '@/api/services/Service'
 import { formatDate } from '@/utils/date'
 import { usePageAuth } from '@/hooks/usePageAuth'
+import { formatSize } from '../../utils/format'
 
 interface Album {
   id: number
@@ -283,17 +286,17 @@ const onScrollToLower = () => {
 }
 
 // 格式化文件大小
-const formatSize = (size: number) => {
-  if (size < 1024) {
-    return size + 'B'
-  } else if (size < 1024 * 1024) {
-    return (size / 1024).toFixed(1) + 'KB'
-  } else if (size < 1024 * 1024 * 1024) {
-    return (size / (1024 * 1024)).toFixed(1) + 'MB'
-  } else {
-    return (size / (1024 * 1024 * 1024)).toFixed(1) + 'GB'
-  }
-}
+// const formatSize = (size: number) => {
+//   if (size < 1024) {
+//     return size + 'B'
+//   } else if (size < 1024 * 1024) {
+//     return (size / 1024).toFixed(1) + 'KB'
+//   } else if (size < 1024 * 1024 * 1024) {
+//     return (size / (1024 * 1024)).toFixed(1) + 'MB'
+//   } else {
+//     return (size / (1024 * 1024 * 1024)).toFixed(1) + 'GB'
+//   }
+// }
 
 onMounted(() => {
   fetchAlbums()
@@ -452,9 +455,15 @@ onMounted(() => {
     color: #fff;
     font-size: 24rpx;
     display: flex;
-    gap: 20rpx;
+    justify-content: space-between;
+    align-items: center;
     transform: translateY(0);
     transition: transform 0.3s ease;
+
+    .stats-left {
+      display: flex;
+      gap: 20rpx;
+    }
 
     .stat-item {
       display: flex;
@@ -519,14 +528,6 @@ onMounted(() => {
     align-items: center;
 
     .update-time {
-      font-size: 24rpx;
-      color: #999;
-    }
-
-    .album-size {
-      display: flex;
-      align-items: center;
-      gap: 6rpx;
       font-size: 24rpx;
       color: #999;
     }

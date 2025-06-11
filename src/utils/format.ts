@@ -1,6 +1,10 @@
 export const formatSize = (mb: number): string => {
   if (mb === 0) return '0 MB'
 
+  if (mb < 1) {
+    return mb.toFixed(2) + ' MB'
+  }
+
   const k = 1024
   const sizes = ['MB', 'GB', 'TB']
   const i = Math.floor(Math.log(mb) / Math.log(k))
