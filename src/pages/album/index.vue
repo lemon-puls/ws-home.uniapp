@@ -30,6 +30,7 @@
           :key="album.id"
           class="album-item"
           @tap="handleAlbumClick(album)"
+          @longpress="handleLongPress(album)"
           :style="{ animationDelay: index * 0.1 + 's' }"
         >
           <view class="album-cover-wrapper">
@@ -106,6 +107,48 @@
         </view>
       </view>
     </view>
+
+    <!-- 操作菜单弹窗 -->
+    <view v-if="showActionMenu" class="action-menu-mask" @tap="closeActionMenu">
+      <view class="action-menu" :class="{ 'menu-show': showActionMenu }" @tap.stop>
+        <view class="menu-item" @tap="handleEdit">
+          <wd-icon name="edit" size="24px" color="#018d71"></wd-icon>
+          <text>编辑相册</text>
+        </view>
+        <view class="menu-item delete" @tap="handleDelete">
+          <wd-icon name="delete" size="24px" color="#ff4d4f"></wd-icon>
+          <text>删除相册</text>
+        </view>
+      </view>
+    </view>
+
+    <!-- 编辑相册弹窗 -->
+    <view v-if="showEditPopup" class="popup-mask" @tap="closeEditPopup">
+      <view class="create-popup" @tap.stop>
+        <view class="popup-header">
+          <text class="popup-title">编辑相册</text>
+          <wd-icon name="close" size="24px" color="#999999" @click="closeEditPopup"></wd-icon>
+        </view>
+        <view class="popup-content">
+          <view class="input-group">
+            <text class="input-label">相册名称</text>
+            <input v-model="editAlbum.title" placeholder="请输入相册名称" class="input" />
+          </view>
+          <view class="input-group">
+            <text class="input-label">相册描述</text>
+            <textarea
+              v-model="editAlbum.description"
+              placeholder="请输入相册描述（选填）"
+              class="textarea"
+            />
+          </view>
+        </view>
+        <view class="popup-footer">
+          <button class="cancel-btn" @tap="closeEditPopup">取消</button>
+          <button class="confirm-btn" @tap="confirmEdit">保存</button>
+        </view>
+      </view>
+    </view>
   </view>
 </template>
 
@@ -162,6 +205,14 @@ const currentPage = ref(1)
 const pageSize = ref(20)
 const hasMore = ref(true)
 const isLoading = ref(false)
+
+const showActionMenu = ref(false)
+const showEditPopup = ref(false)
+const currentAlbum = ref<Album | null>(null)
+const editAlbum = ref({
+  title: '',
+  description: '',
+})
 
 usePageAuth()
 
@@ -283,6 +334,100 @@ const onScrollToLower = () => {
   if (hasMore.value && !isLoading.value) {
     fetchAlbums(true)
   }
+}
+
+// 长按相册
+const handleLongPress = (album: Album) => {
+  currentAlbum.value = album
+  showActionMenu.value = true
+}
+
+// 关闭操作菜单
+const closeActionMenu = () => {
+  showActionMenu.value = false
+  currentAlbum.value = null
+}
+
+// 处理编辑
+const handleEdit = () => {
+  if (!currentAlbum.value) return
+  editAlbum.value = {
+    title: currentAlbum.value.name,
+    description: currentAlbum.value.description,
+  }
+  showEditPopup.value = true
+  closeActionMenu()
+}
+
+// 关闭编辑弹窗
+const closeEditPopup = () => {
+  showEditPopup.value = false
+  editAlbum.value = {
+    title: '',
+    description: '',
+  }
+}
+
+// 确认编辑
+const confirmEdit = async () => {
+  if (!currentAlbum.value || !editAlbum.value.title) {
+    uni.showToast({
+      title: '请输入相册名称',
+      icon: 'none',
+    })
+    return
+  }
+
+  try {
+    await Service.putAlbum({
+      id: currentAlbum.value.id,
+      body: {
+        name: editAlbum.value.title,
+        description: editAlbum.value.description,
+      },
+    })
+    uni.showToast({
+      title: '修改成功',
+      icon: 'success',
+    })
+    closeEditPopup()
+    fetchAlbums()
+  } catch (error) {
+    uni.showToast({
+      title: '修改相册失败',
+      icon: 'none',
+    })
+  }
+}
+
+// 处理删除
+const handleDelete = () => {
+  if (!currentAlbum.value) return
+  uni.showModal({
+    title: '确认删除',
+    content: '删除后无法恢复，是否确认删除？',
+    confirmColor: '#ff4d4f',
+    success: async (res) => {
+      if (res.confirm) {
+        try {
+          await Service.deleteAlbum({
+            id: currentAlbum.value!.id,
+          })
+          uni.showToast({
+            title: '删除成功',
+            icon: 'success',
+          })
+          closeActionMenu()
+          resetList()
+        } catch (error) {
+          uni.showToast({
+            title: '删除相册失败',
+            icon: 'none',
+          })
+        }
+      }
+    },
+  })
 }
 
 // 格式化文件大小
@@ -697,6 +842,67 @@ onMounted(() => {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+.action-menu-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  animation: fadeIn 0.3s ease;
+}
+
+.action-menu {
+  background-color: #fff;
+  border-radius: 24rpx;
+  width: 400rpx;
+  overflow: hidden;
+  transform: scale(0.8);
+  opacity: 0;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+
+  &.menu-show {
+    transform: scale(1);
+    opacity: 1;
+  }
+
+  .menu-item {
+    display: flex;
+    align-items: center;
+    gap: 20rpx;
+    padding: 30rpx;
+    font-size: 32rpx;
+    color: #333;
+    transition: all 0.3s ease;
+
+    &:active {
+      background-color: #f5f5f5;
+    }
+
+    &.delete {
+      color: #ff4d4f;
+      border-top: 1rpx solid #eee;
+    }
+
+    text {
+      flex: 1;
+    }
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
   }
 }
 </style>
