@@ -31,10 +31,61 @@
 
         <view class="info-content">
           <view class="title-section">
-            <text class="title">{{ albumInfo.name }}</text>
-            <text class="description" v-if="albumInfo.description">
-              {{ albumInfo.description }}
-            </text>
+            <view class="title-wrapper">
+              <text v-if="!isEditingTitle" class="title" @tap="startEditTitle">
+                {{ albumInfo.name }}
+              </text>
+              <input
+                v-else
+                v-model="editingTitle"
+                class="title-input"
+                @blur="saveTitle"
+                @confirm="saveTitle"
+                :focus="isEditingTitle"
+              />
+              <wd-icon
+                v-if="!isEditingTitle"
+                name="edit"
+                size="16px"
+                color="#576b95"
+                @click="startEditTitle"
+              ></wd-icon>
+            </view>
+            <view class="description-wrapper">
+              <text
+                v-if="albumInfo.description && !isEditingDescription"
+                class="description"
+                :class="{ 'description-collapsed': !isDescriptionExpanded }"
+                @tap="toggleDescription"
+              >
+                {{ albumInfo.description }}
+              </text>
+              <textarea
+                v-else
+                v-model="editingDescription"
+                class="description-textarea"
+                :focus="isEditingDescription"
+                @blur="saveDescription"
+                @confirm="saveDescription"
+                maxlength="1000"
+                auto-height
+              />
+              <view v-if="albumInfo.description" class="description-actions">
+                <text v-if="!isEditingDescription" class="expand-btn" @tap="toggleDescription">
+                  {{ isDescriptionExpanded ? '收起' : '展开' }}
+                </text>
+                <text v-if="isEditingDescription" class="input-count">
+                  {{ editingDescription.length }}/1000
+                </text>
+                <wd-icon
+                  v-if="!isEditingDescription"
+                  name="edit"
+                  size="16px"
+                  color="#576b95"
+                  @click="startEditDescription"
+                ></wd-icon>
+              </view>
+            </view>
           </view>
 
           <view class="stats-section">
@@ -267,6 +318,11 @@ const imageType = ref('compressed')
 const compressImage = ref<boolean>(true) // 新增：图片压缩开关
 const scrollTop = ref(0)
 const refreshing = ref(false)
+const isDescriptionExpanded = ref(false)
+const isEditingTitle = ref(false)
+const isEditingDescription = ref(false)
+const editingTitle = ref('')
+const editingDescription = ref('')
 
 // 筛选类型选项
 const filterTypeOptions = [
@@ -668,6 +724,101 @@ const formatSize = (size: number) => {
   }
 }
 
+// 切换描述展开/收起
+const toggleDescription = () => {
+  isDescriptionExpanded.value = !isDescriptionExpanded.value
+}
+
+// 开始编辑标题
+const startEditTitle = () => {
+  editingTitle.value = albumInfo.value.name
+  isEditingTitle.value = true
+}
+
+// 保存标题
+const saveTitle = async () => {
+  if (editingTitle.value.trim() === '') {
+    uni.showToast({
+      title: '相册名称不能为空',
+      icon: 'none',
+    })
+    return
+  }
+
+  try {
+    const res = await Service.postAlbum({
+      body: {
+        id: albumId.value,
+        name: editingTitle.value,
+        description: albumInfo.value.description,
+        start_time: albumInfo.value.start_time,
+        cover_img: albumInfo.value.cover_img,
+      },
+    })
+
+    if (res.code === 0) {
+      albumInfo.value.name = editingTitle.value
+      uni.showToast({
+        title: '修改成功',
+        icon: 'success',
+      })
+    } else {
+      uni.showToast({
+        title: res.msg || '修改失败',
+        icon: 'none',
+      })
+    }
+  } catch (error) {
+    uni.showToast({
+      title: '修改失败',
+      icon: 'none',
+    })
+  } finally {
+    isEditingTitle.value = false
+  }
+}
+
+// 开始编辑描述
+const startEditDescription = () => {
+  editingDescription.value = albumInfo.value.description || ''
+  isEditingDescription.value = true
+}
+
+// 保存描述
+const saveDescription = async () => {
+  try {
+    const res = await Service.postAlbum({
+      body: {
+        id: albumId.value,
+        name: albumInfo.value.name,
+        cover_img: albumInfo.value.cover_img,
+        description: editingDescription.value,
+        start_time: albumInfo.value.start_time,
+      },
+    })
+
+    if (res.code === 0) {
+      albumInfo.value.description = editingDescription.value
+      uni.showToast({
+        title: '修改成功',
+        icon: 'success',
+      })
+    } else {
+      uni.showToast({
+        title: res.msg || '修改失败',
+        icon: 'none',
+      })
+    }
+  } catch (error) {
+    uni.showToast({
+      title: '修改失败',
+      icon: 'none',
+    })
+  } finally {
+    isEditingDescription.value = false
+  }
+}
+
 usePageAuth()
 </script>
 
@@ -781,18 +932,78 @@ usePageAuth()
     .title-section {
       margin-bottom: 30rpx;
 
-      .title {
-        font-size: 40rpx;
-        font-weight: 600;
-        color: #333;
+      .title-wrapper {
+        display: flex;
+        align-items: center;
+        gap: 16rpx;
         margin-bottom: 12rpx;
-        display: block;
+
+        .title {
+          font-size: 40rpx;
+          font-weight: 600;
+          color: #333;
+          flex: 1;
+        }
+
+        .title-input {
+          flex: 1;
+          font-size: 40rpx;
+          font-weight: 600;
+          color: #333;
+          background: #f8f9fa;
+          border-radius: 12rpx;
+          padding: 12rpx 20rpx;
+          border: 2rpx solid #3498db;
+        }
       }
 
-      .description {
-        font-size: 28rpx;
-        color: #666;
-        line-height: 1.6;
+      .description-wrapper {
+        position: relative;
+
+        .description {
+          font-size: 28rpx;
+          color: #666;
+          line-height: 1.6;
+          transition: all 0.3s ease;
+
+          &.description-collapsed {
+            display: -webkit-box;
+            -webkit-line-clamp: 2;
+            -webkit-box-orient: vertical;
+            overflow: hidden;
+          }
+        }
+
+        .description-textarea {
+          width: 100%;
+          min-height: 160rpx;
+          font-size: 28rpx;
+          color: #333;
+          line-height: 1.6;
+          padding: 0;
+          background: transparent;
+        }
+
+        .description-actions {
+          display: flex;
+          align-items: center;
+          justify-content: flex-end;
+          gap: 16rpx;
+          margin-top: 12rpx;
+
+          .expand-btn {
+            font-size: 26rpx;
+            color: #576b95;
+            padding: 4rpx 12rpx;
+            border-radius: 20rpx;
+            background: rgba(87, 107, 149, 0.1);
+          }
+
+          .input-count {
+            font-size: 24rpx;
+            color: #999;
+          }
+        }
       }
     }
 
