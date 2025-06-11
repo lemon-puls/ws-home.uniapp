@@ -4,6 +4,8 @@ import { useUserStore } from '@/store'
 import { platform } from '@/utils/platform'
 import { getEnvBaseUrl } from '@/utils'
 import { IUserInfoVo } from '@/api/login.typings'
+import { Service } from '@/api/services/Service'
+import type { common_Response } from '@/api/models/common_Response'
 
 export type CustomRequestOptions = UniApp.RequestOptions & {
   query?: Record<string, any>
@@ -85,6 +87,7 @@ const httpInterceptor = {
             // 刷新成功，重试原请求
             uni.request(options)
           } catch (e) {
+            console.log('刷新token失败', e)
             // 刷新失败，清除用户信息并跳转登录
             const userStore = useUserStore()
             userStore.logout()
@@ -108,34 +111,34 @@ async function handleRefreshToken() {
   }
   isRefreshing = true
   const refreshToken = uni.getStorageSync('refreshToken')
+  console.log('refreshToken:', refreshToken)
   refreshPromise = new Promise((resolve, reject) => {
     if (!refreshToken) {
       reject(new Error('无refreshToken'))
       return
     }
-    import('@/api/services/Service').then(({ Service }) => {
-      Service.postUserRefresh({ authorization: `Bearer ${refreshToken}` })
-        .then((res) => {
-          console.log('刷新token成功', res)
-          if (res && res.data && res.code === 0) {
-            const { accessToken, refreshToken: newRefreshToken, userVO } = res.data
-            uni.setStorageSync('accessToken', accessToken)
-            uni.setStorageSync('refreshToken', newRefreshToken)
-            console.log('更新token成功', accessToken, newRefreshToken)
-            // 更新 pinia userInfo
-            const userStore = useUserStore()
-            userStore.setUserInfo({ ...userVO, token: accessToken } as IUserInfoVo)
-            resolve(accessToken)
-          } else {
-            reject(new Error('刷新token失败'))
-          }
-        })
-        .catch(reject)
-        .finally(() => {
-          isRefreshing = false
-          refreshPromise = null
-        })
-    })
+
+    Service.postUserRefresh({ authorization: `Bearer ${refreshToken}` })
+      .then((res: any) => {
+        console.log('刷新token成功', res)
+        if (res && res.data && res.code === 0) {
+          const { accessToken, refreshToken: newRefreshToken, userVO } = res.data
+          uni.setStorageSync('accessToken', accessToken)
+          uni.setStorageSync('refreshToken', newRefreshToken)
+          console.log('更新token成功', accessToken, newRefreshToken)
+          // 更新 pinia userInfo
+          const userStore = useUserStore()
+          userStore.setUserInfo({ ...userVO, token: accessToken } as IUserInfoVo)
+          resolve(accessToken)
+        } else {
+          reject(new Error('刷新token失败'))
+        }
+      })
+      .catch(reject)
+      .finally(() => {
+        isRefreshing = false
+        refreshPromise = null
+      })
   })
   return refreshPromise
 }
