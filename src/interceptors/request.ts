@@ -37,7 +37,6 @@ const httpInterceptor = {
     // 非 http 开头需拼接地址
     if (!options.url.startsWith('http')) {
       // #ifdef H5
-      // console.log(__VITE_APP_PROXY__)
       if (JSON.parse(__VITE_APP_PROXY__)) {
         // 自动拼接代理前缀
         options.url = import.meta.env.VITE_APP_PROXY_PREFIX + options.url
@@ -49,7 +48,6 @@ const httpInterceptor = {
       // #ifndef H5
       options.url = baseUrl + options.url
       // #endif
-      // TIPS: 如果需要对接多个后端服务，也可以在这里处理，拼接成所需要的地址
     }
     // 1. 请求超时
     options.timeout = 10000 // 10s
@@ -66,26 +64,39 @@ const httpInterceptor = {
       options.header.Authorization = `Bearer ${accessToken}`
     } else {
       const userStore = useUserStore()
-      const { token } = userStore.userInfo as unknown as IUserInfo
+      const { token } = userStore.userInfo as unknown as IUserInfoVo
       if (token) {
         options.header.Authorization = `Bearer ${token}`
       }
     }
+
     // 响应拦截（仅在 request 拦截器里处理，uploadFile 不处理401重试）
     if (options.method && options.method.toUpperCase() !== 'UPLOADFILE') {
+      const originalSuccess = options.success
+      const originalFail = options.fail
       const originalComplete = options.complete
-      options.complete = async function (res) {
-        console.log('响应拦截器', res)
-        // 401未登录，尝试刷新token
-        if (
-          res &&
-          (res.statusCode === 401 || (res.data && res.data.code === 401) || res.data.code === 4)
-        ) {
+
+      options.success = async (res: any) => {
+        if (res.statusCode === 401 || (res.data && res.data.code === 401) || res.data.code === 4) {
           console.log('token失效，尝试刷新token')
           try {
             await handleRefreshToken()
             // 刷新成功，重试原请求
-            uni.request(options)
+            const retryOptions = { ...options }
+            delete retryOptions.success
+            delete retryOptions.fail
+            delete retryOptions.complete
+
+            const retryRes = await new Promise((resolve, reject) => {
+              uni.request({
+                ...retryOptions,
+                success: (res) => resolve(res),
+                fail: (err) => reject(err),
+              })
+            })
+
+            originalSuccess && originalSuccess(retryRes as any)
+            originalComplete && originalComplete(retryRes as any)
           } catch (e) {
             console.log('刷新token失败', e)
             // 刷新失败，清除用户信息并跳转登录
@@ -95,10 +106,18 @@ const httpInterceptor = {
             setTimeout(() => {
               uni.redirectTo({ url: '/pages/login/index' })
             }, 1500)
+            originalFail && originalFail(e as any)
+            originalComplete && originalComplete(e as any)
           }
         } else {
+          originalSuccess && originalSuccess(res)
           originalComplete && originalComplete(res)
         }
+      }
+
+      options.fail = (err) => {
+        originalFail && originalFail(err)
+        originalComplete && originalComplete(err)
       }
     }
   },
