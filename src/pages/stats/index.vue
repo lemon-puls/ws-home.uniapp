@@ -43,7 +43,7 @@
               class="pie-chart"
               :style="{
                 background: `conic-gradient(
-                #018d71 0% ${imagePercentage}%,
+                #2e86de 0% ${imagePercentage}%,
                 #ff9500 ${imagePercentage}% 100%
               )`,
               }"
@@ -97,7 +97,7 @@
               class="pie-chart"
               :style="{
                 background: `conic-gradient(
-                #018d71 0% ${imageSizePercentage}%,
+                #2e86de 0% ${imageSizePercentage}%,
                 #ff9500 ${imageSizePercentage}% 100%
               )`,
               }"
@@ -162,7 +162,7 @@
             <view
               class="progress-bar-bg"
               :style="{
-                background: `linear-gradient(90deg, #018d71 0%, #018d71 ${((album.photoSize / (album.photoSize + album.videoSize)) * 100).toFixed(2)}%, #ff9500 ${((album.photoSize / (album.photoSize + album.videoSize)) * 100).toFixed(2)}%, #ff9500 100%)`,
+                background: `linear-gradient(90deg, #2e86de 0%, #2e86de ${((album.photoSize / (album.photoSize + album.videoSize)) * 100).toFixed(2)}%, #ff9500 ${((album.photoSize / (album.photoSize + album.videoSize)) * 100).toFixed(2)}%, #ff9500 100%)`,
               }"
             ></view>
           </view>
@@ -240,8 +240,8 @@ const statsCards = computed(() => [
     title: '相册总数',
     value: stats.value.totalAlbums,
     icon: 'album',
-    color: '#018d71',
-    gradient: 'linear-gradient(135deg, rgba(1, 141, 113, 0.1), rgba(0, 184, 148, 0.1))',
+    color: '#2e86de',
+    gradient: 'linear-gradient(135deg, rgba(46, 134, 222, 0.1), rgba(84, 160, 255, 0.1))',
   },
   {
     title: '文件总数',
@@ -316,7 +316,7 @@ onMounted(() => {
   .circle {
     position: absolute;
     border-radius: 50%;
-    background: linear-gradient(135deg, rgba(1, 141, 113, 0.1), rgba(0, 184, 148, 0.1));
+    background: linear-gradient(135deg, rgba(46, 134, 222, 0.1), rgba(84, 160, 255, 0.1));
     animation: float 8s infinite ease-in-out;
   }
 
@@ -440,7 +440,7 @@ onMounted(() => {
           border-radius: 50%;
 
           &.image {
-            background: linear-gradient(135deg, #018d71, #00b894);
+            background: linear-gradient(135deg, #2e86de, #54a0ff);
           }
 
           &.video {
@@ -518,7 +518,7 @@ onMounted(() => {
             border-radius: 50%;
 
             &.image {
-              background: linear-gradient(135deg, #018d71, #00b894);
+              background: linear-gradient(135deg, #2e86de, #54a0ff);
             }
 
             &.video {
@@ -580,7 +580,7 @@ onMounted(() => {
             transition: width 0.6s ease-out;
 
             &.image {
-              background: linear-gradient(135deg, #018d71, #00b894);
+              background: linear-gradient(135deg, #2e86de, #54a0ff);
             }
 
             &.video {

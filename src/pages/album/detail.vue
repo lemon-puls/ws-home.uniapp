@@ -851,7 +851,7 @@ usePageAuth()
   .circle {
     position: absolute;
     border-radius: 50%;
-    background: linear-gradient(135deg, rgba(1, 141, 113, 0.1), rgba(0, 184, 148, 0.1));
+    background: linear-gradient(135deg, rgba(46, 134, 222, 0.1), rgba(84, 160, 255, 0.1));
     animation: float 8s infinite ease-in-out;
   }
 
@@ -1026,7 +1026,7 @@ usePageAuth()
           width: 64rpx;
           height: 64rpx;
           border-radius: 16rpx;
-          background: rgba(7, 193, 96, 0.1);
+          background: rgba(46, 134, 222, 0.1);
           display: flex;
           align-items: center;
           justify-content: center;
@@ -1115,8 +1115,8 @@ usePageAuth()
           }
 
           &.active {
-            background: linear-gradient(135deg, #018d71, #00b894);
-            box-shadow: 0 4rpx 12rpx rgba(1, 141, 113, 0.2);
+            background: linear-gradient(135deg, #2e86de, #54a0ff);
+            box-shadow: 0 4rpx 12rpx rgba(46, 134, 222, 0.2);
 
             text {
               color: #fff;
@@ -1157,7 +1157,7 @@ usePageAuth()
         }
 
         &.edit-btn {
-          background: linear-gradient(135deg, #018d71, #00b894);
+          background: linear-gradient(135deg, #2e86de, #54a0ff);
           color: #fff;
         }
 
@@ -1186,7 +1186,7 @@ usePageAuth()
       align-items: center;
       gap: 8rpx;
       font-size: 28rpx;
-      color: #07c160;
+      color: #2e86de;
       font-weight: 500;
     }
 
@@ -1224,9 +1224,9 @@ usePageAuth()
             left: 0;
             right: 0;
             bottom: 0;
-            border: 4rpx solid #07c160;
+            border: 4rpx solid #2e86de;
             border-radius: 16rpx;
-            box-shadow: 0 0 20rpx rgba(7, 193, 96, 0.3);
+            box-shadow: 0 0 20rpx rgba(46, 134, 222, 0.3);
             z-index: 1;
           }
         }

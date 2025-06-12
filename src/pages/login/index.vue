@@ -313,7 +313,7 @@ const handleAgreement = (type: 'user' | 'privacy') => {
 .bg-decoration {
   position: absolute;
   border-radius: 50%;
-  background: linear-gradient(135deg, rgba(147, 197, 255, 0.15), rgba(255, 179, 235, 0.15));
+  background: linear-gradient(135deg, rgba(46, 134, 222, 0.15), rgba(84, 160, 255, 0.15));
   z-index: 0;
   pointer-events: none;
   animation: float-effect 15s infinite ease-in-out;
@@ -344,7 +344,7 @@ const handleAgreement = (type: 'user' | 'privacy') => {
   bottom: -100rpx;
   right: 10%;
   opacity: 0.3;
-  background: linear-gradient(135deg, rgba(255, 223, 186, 0.15), rgba(186, 255, 223, 0.15));
+  background: linear-gradient(135deg, rgba(46, 134, 222, 0.15), rgba(84, 160, 255, 0.15));
   animation-delay: -10s;
 }
 
@@ -497,7 +497,7 @@ const handleAgreement = (type: 'user' | 'privacy') => {
         left: 0;
         width: 100%;
         height: 3rpx;
-        background: linear-gradient(to right, #a6c1ee, #fbc2eb);
+        background: linear-gradient(to right, #2e86de, #54a0ff);
         transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
         transform: scaleX(0);
         opacity: 0.9;
@@ -541,8 +541,8 @@ const handleAgreement = (type: 'user' | 'privacy') => {
       font-weight: 500;
       letter-spacing: 1rpx;
       border-radius: 48rpx;
-      background: linear-gradient(135deg, #a6c1ee 0%, #fbc2eb 100%);
-      box-shadow: 0 12rpx 30rpx rgba(251, 194, 235, 0.3);
+      background: linear-gradient(135deg, #2e86de 0%, #54a0ff 100%);
+      box-shadow: 0 12rpx 30rpx rgba(46, 134, 222, 0.3);
       transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
       display: flex;
       align-items: center;
@@ -655,7 +655,7 @@ const handleAgreement = (type: 'user' | 'privacy') => {
     .agreement-link {
       padding: 0 4rpx;
       font-weight: 500;
-      color: #6699ff;
+      color: #2e86de;
       transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
       position: relative;
 

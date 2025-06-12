@@ -178,7 +178,7 @@ const handleRefresh = async () => {
   .circle {
     position: absolute;
     border-radius: 50%;
-    background: linear-gradient(135deg, rgba(1, 141, 113, 0.1), rgba(0, 184, 148, 0.1));
+    background: linear-gradient(135deg, rgba(46, 134, 222, 0.1), rgba(84, 160, 255, 0.1));
     animation: float 8s infinite ease-in-out;
   }
 
@@ -243,7 +243,7 @@ const handleRefresh = async () => {
 
     .subtitle {
       font-size: 36rpx;
-      color: #018d71;
+      color: #2e86de;
       font-weight: 500;
       display: block;
     }
@@ -370,7 +370,7 @@ const handleRefresh = async () => {
   .menu-icon {
     width: 80rpx;
     height: 80rpx;
-    background: linear-gradient(135deg, #018d71, #00b894);
+    background: linear-gradient(135deg, #2e86de, #54a0ff);
     border-radius: 20rpx;
     display: flex;
     align-items: center;

@@ -112,7 +112,7 @@
     <view v-if="showActionMenu" class="action-menu-mask" @tap="closeActionMenu">
       <view class="action-menu" :class="{ 'menu-show': showActionMenu }" @tap.stop>
         <view class="menu-item" @tap="handleEdit">
-          <wd-icon name="edit" size="24px" color="#018d71"></wd-icon>
+          <wd-icon name="edit" size="24px" color="#2e86de"></wd-icon>
           <text>编辑相册</text>
         </view>
         <view class="menu-item delete" @tap="handleDelete">
@@ -474,7 +474,7 @@ onUnmounted(() => {
   .circle {
     position: absolute;
     border-radius: 50%;
-    background: linear-gradient(135deg, rgba(1, 141, 113, 0.1), rgba(0, 184, 148, 0.1));
+    background: linear-gradient(135deg, rgba(46, 134, 222, 0.1), rgba(84, 160, 255, 0.1));
     animation: float 8s infinite ease-in-out;
   }
 
@@ -534,16 +534,16 @@ onUnmounted(() => {
     display: flex;
     align-items: center;
     justify-content: center;
-    background: linear-gradient(135deg, #018d71, #00b894);
+    background: linear-gradient(135deg, #2e86de, #54a0ff);
     color: #fff;
     border-radius: 50%;
-    box-shadow: 0 4rpx 12rpx rgba(1, 141, 113, 0.2);
+    box-shadow: 0 4rpx 12rpx rgba(46, 134, 222, 0.2);
     transition: all 0.3s ease;
   }
 
   .btn-hover {
     transform: scale(0.95);
-    box-shadow: 0 2rpx 8rpx rgba(1, 141, 113, 0.15);
+    box-shadow: 0 2rpx 8rpx rgba(46, 134, 222, 0.15);
   }
 }
 
@@ -793,7 +793,7 @@ onUnmounted(() => {
     }
 
     .confirm-btn {
-      background: linear-gradient(135deg, #018d71, #00b894);
+      background: linear-gradient(135deg, #2e86de, #54a0ff);
       color: #fff;
     }
   }
@@ -898,6 +898,10 @@ onUnmounted(() => {
 
     text {
       flex: 1;
+    }
+
+    .wd-icon {
+      color: #2e86de;
     }
   }
 }
