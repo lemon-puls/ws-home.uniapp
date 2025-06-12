@@ -50,7 +50,6 @@
             >
               <view class="pie-center">
                 <text class="total-count">{{ stats.totalMedia }}</text>
-                <text class="total-label">总文件数</text>
               </view>
             </view>
             <view class="chart-details">
@@ -105,7 +104,6 @@
             >
               <view class="pie-center">
                 <text class="total-count">{{ formatSize(stats.totalSize) }}</text>
-                <text class="total-label">总存储空间</text>
               </view>
             </view>
             <view class="chart-details">
@@ -477,16 +475,18 @@ onMounted(() => {
         background: #fff;
         border-radius: 50%;
         display: flex;
-        flex-direction: column;
         align-items: center;
         justify-content: center;
         box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
         z-index: 2;
 
         .total-count {
-          font-size: 28rpx;
+          font-size: 20rpx;
           font-weight: bold;
           color: #333;
+          white-space: nowrap;
+          text-align: center;
+          width: 100%;
         }
 
         .total-label {
@@ -678,7 +678,7 @@ onMounted(() => {
   }
 
   .album-count {
-    font-size: 22rpx;
+    font-size: 18rpx;
     color: #888;
   }
 }
