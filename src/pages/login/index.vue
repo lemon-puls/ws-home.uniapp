@@ -148,8 +148,8 @@ const captcha = ref<ICaptcha>({
 })
 // 登录表单数据
 const loginForm = ref<ILoginForm>({
-  username: 'admin',
-  password: '123456',
+  username: '',
+  password: '',
   code: '',
   uuid: '',
 })

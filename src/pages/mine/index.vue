@@ -34,11 +34,12 @@
             type="nickname"
             class="weui-input"
             placeholder="请输入昵称"
-            v-model="userStore.userInfo.username"
+            v-model="userStore.userInfo.userName"
+            @change="handleNicknameChange"
           />
           <!-- #endif -->
           <!-- #ifndef MP-WEIXIN -->
-          <view class="username">{{ userStore.userInfo.username }}</view>
+          <view class="username">{{ userStore.userInfo.userName }}</view>
           <!-- #endif -->
           <view class="user-id">ID: {{ userStore.userInfo.id }}</view>
           <view class="user-created">
@@ -90,18 +91,20 @@ import { useUserStore } from '@/store'
 import { useToast } from 'wot-design-uni'
 import { uploadFileUrl, useUpload } from '@/utils/uploadFile'
 import { IUploadSuccessInfo } from '@/api/login.typings'
-import { usePageAuth } from '@/hooks/usePageAuth'
+import { Service } from '@/api/services/Service'
 
 const userStore = useUserStore()
 
 const toast = useToast()
-const hasLogin = ref(false)
+const hasLogin = computed(() => userStore.isLogined())
 
-usePageAuth()
+const userInfo = computed(() => userStore.userInfo)
 
 onShow((options) => {
   hasLogin.value = !!uni.getStorageSync('token')
   console.log('个人中心onShow', hasLogin.value, options)
+
+  console.log('userInfo', userInfo.value)
 
   hasLogin.value && userStore.getUserInfo()
 })
@@ -138,18 +141,92 @@ const handleLogin = async () => {
 // #ifdef MP-WEIXIN
 
 // 微信小程序下选择头像事件
-const onChooseAvatar = (e: any) => {
+const onChooseAvatar = async (e: any) => {
   console.log('选择头像', e.detail)
   const { avatarUrl } = e.detail
-  const { run } = useUpload<IUploadSuccessInfo>(
-    uploadFileUrl.USER_AVATAR,
-    {},
-    {
-      onSuccess: (res) => userStore.getUserInfo(),
-    },
-    avatarUrl,
-  )
-  run()
+
+  try {
+    uni.showLoading({
+      title: '上传中...',
+    })
+
+    // 读取文件内容
+    const fileContent = await new Promise<ArrayBuffer>((resolve, reject) => {
+      uni.getFileSystemManager().readFile({
+        filePath: avatarUrl,
+        success: (res) => resolve(res.data as ArrayBuffer),
+        fail: (err) => {
+          console.error('读取文件失败:', err)
+          reject(new Error('读取文件失败'))
+        },
+      })
+    })
+
+    // 生成文件key
+    const fileKey = `avatar/${Date.now()}_${avatarUrl.split('/').pop()}`
+
+    // 获取预签名URL
+    const presignedRes = await Service.postCosPresignedUrl({
+      data: {
+        key: fileKey,
+        type: 'upload',
+      },
+    })
+
+    if (presignedRes.code !== 0 || !presignedRes.data) {
+      throw new Error('获取上传 URL 失败')
+    }
+
+    // 上传文件
+    const uploadResult = await new Promise((resolve, reject) => {
+      uni.request({
+        url: presignedRes.data.url,
+        method: 'PUT',
+        data: fileContent,
+        header: {
+          'Content-Type': 'image/jpeg',
+        },
+        success: (res) => {
+          console.log('上传响应:', res)
+          if (res.statusCode >= 200 && res.statusCode < 300) {
+            resolve(res)
+          } else {
+            reject(new Error(`上传失败: ${res.statusCode}, ${JSON.stringify(res.data)}`))
+          }
+        },
+        fail: (err) => {
+          console.error('上传请求失败:', err)
+          reject(new Error(`上传失败: ${JSON.stringify(err)}`))
+        },
+      })
+    })
+
+    console.log('上传成功:', uploadResult)
+
+    // 获取文件访问路径
+    const downloadRes = await Service.postCosPresignedUrl({
+      data: {
+        key: fileKey,
+        type: 'download',
+      },
+    })
+
+    if (downloadRes.code !== 0) {
+      throw new Error(downloadRes.msg || '获取访问地址失败')
+    }
+
+    await userStore.updateUserInfo({
+      avatar: downloadRes.data.url,
+    })
+  } catch (error) {
+    console.error('上传失败:', error)
+    uni.showToast({
+      title: '上传失败',
+      icon: 'none',
+    })
+  } finally {
+    uni.hideLoading()
+  }
 }
 // #endif
 // #ifdef MP-WEIXIN
@@ -169,8 +246,11 @@ const handleLogout = () => {
         // 清空用户信息
         userStore.logout()
         hasLogin.value = false
+        setTimeout(() => {
+          uni.redirectTo({ url: '/pages/login/index' })
+        }, 1500)
         // 执行退出登录逻辑
-        toast.success('退出登录成功')
+        // toast.success('退出登录成功')
         // #ifdef MP-WEIXIN
         // 微信小程序，去首页
         // uni.reLaunch({ url: '/pages/index/index' })
@@ -183,6 +263,25 @@ const handleLogout = () => {
     },
   })
 }
+
+// #ifdef MP-WEIXIN
+// 处理昵称变更
+const handleNicknameChange = async (e: any) => {
+  const newNickname = e.detail.value
+  if (!newNickname) {
+    toast.error('昵称不能为空')
+    return
+  }
+  try {
+    // 调用更新用户信息的接口
+    await userStore.updateUserInfo({ userName: newNickname })
+    toast.success('昵称修改成功')
+  } catch (error) {
+    console.error('更新昵称失败:', error)
+    toast.error('昵称修改失败')
+  }
+}
+// #endif
 </script>
 
 <style lang="scss" scoped>
@@ -262,16 +361,67 @@ const handleLogout = () => {
   height: 160rpx;
   margin-right: 40rpx;
   overflow: hidden;
-  border: 4rpx solid rgba(255, 255, 255, 0.5);
+  border: 4rpx solid rgba(255, 255, 255, 0.8);
   border-radius: 50%;
-  box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
-  transition:
-    transform 0.3s ease,
-    box-shadow 0.3s ease;
+  box-shadow: 0 8rpx 24rpx rgba(0, 0, 0, 0.12);
+  transition: all 0.3s ease;
+  position: relative;
+  background: #fff;
+
+  &::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    border-radius: 50%;
+    box-shadow: inset 0 0 0 2rpx rgba(255, 255, 255, 0.5);
+  }
 
   &:active {
     transform: scale(0.95);
-    box-shadow: 0 2rpx 8rpx rgba(0, 0, 0, 0.15);
+    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.15);
+  }
+
+  .wd-img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+    transition: transform 0.3s ease;
+
+    &:hover {
+      transform: scale(1.05);
+    }
+  }
+}
+
+.avatar-button {
+  padding: 0;
+  background: none;
+  line-height: 1;
+  border: none;
+
+  &::after {
+    border: none;
+  }
+
+  &::before {
+    content: '更换头像';
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    background: rgba(0, 0, 0, 0.5);
+    color: #fff;
+    font-size: 24rpx;
+    padding: 8rpx 0;
+    opacity: 0;
+    transition: opacity 0.3s ease;
+  }
+
+  &:active::before {
+    opacity: 1;
   }
 }
 
