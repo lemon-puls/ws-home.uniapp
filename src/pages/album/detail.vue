@@ -217,6 +217,12 @@
                 class="media-image"
                 lazy-load
                 :fade-show="true"
+                @error="(e) => handleImageError(e, media)"
+                @load="(e) => handleImageLoad(e, media)"
+                :webp="true"
+                :show-menu-by-longpress="true"
+                :show-loading="true"
+                loading="lazy"
               />
               <view v-else class="media-video-container">
                 <image
@@ -337,6 +343,9 @@ const imageTypeOptions = [
   { label: '压缩', value: 'compressed', icon: 'compress' },
   { label: '原图', value: 'raw', icon: 'image' },
 ]
+
+// 添加图片加载状态管理
+const imageLoadStatus = ref<Record<number, boolean>>({})
 
 // 获取页面参数
 onLoad((options) => {
@@ -588,7 +597,7 @@ const handleUpload = async () => {
         }
       }
 
-      const fileKey = `album/${albumId.value}/${Date.now()}_${uploadFilePath.split('/').pop()}`
+      const fileKey = `ws-home/ablum/${albumId.value}/${Date.now()}_${uploadFilePath.split('/').pop()}`
 
       // 获取预签名URL
       const presignedRes = (await Service.postCosPresignedUrl({
@@ -817,6 +826,20 @@ const saveDescription = async () => {
   } finally {
     isEditingDescription.value = false
   }
+}
+
+// 处理图片加载错误
+const handleImageError = (e: any, media: MediaItem) => {
+  console.error('图片加载失败:', media.url, e)
+  imageLoadStatus.value[media.id] = false
+  // 可以在这里设置一个默认图片
+  media.url = '/static/images/error-image.png'
+}
+
+// 处理图片加载成功
+const handleImageLoad = (e: any, media: MediaItem) => {
+  console.log('图片加载成功:', media.url)
+  imageLoadStatus.value[media.id] = true
 }
 
 usePageAuth()
@@ -1347,5 +1370,15 @@ usePageAuth()
     opacity: 1;
     transform: translateY(0);
   }
+}
+
+.media-image {
+  width: 100%;
+  height: 100%;
+  will-change: transform;
+  -webkit-backface-visibility: hidden;
+  backface-visibility: hidden;
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
 }
 </style>
