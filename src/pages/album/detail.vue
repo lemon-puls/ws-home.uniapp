@@ -109,7 +109,7 @@
             </view>
             <view class="stat-card">
               <view class="stat-icon">
-                <wd-icon name="info" size="24px" color="#07c160"></wd-icon>
+                <wd-icon name="folder" size="24px" color="#07c160"></wd-icon>
               </view>
               <view class="stat-info">
                 <text class="stat-value">{{ formatSize(albumInfo.total_size) }}</text>

@@ -239,7 +239,7 @@ const statsCards = computed(() => [
   {
     title: '相册总数',
     value: stats.value.totalAlbums,
-    icon: 'album',
+    icon: 'folder',
     color: '#2e86de',
     gradient: 'linear-gradient(135deg, rgba(46, 134, 222, 0.1), rgba(84, 160, 255, 0.1))',
   },
@@ -252,8 +252,8 @@ const statsCards = computed(() => [
   },
   {
     title: '存储空间',
-    value: formatSize(stats.value.totalSize), // 直接使用MB单位
-    icon: 'info',
+    value: formatSize(stats.value.totalSize),
+    icon: 'save',
     color: '#2e86de',
     gradient: 'linear-gradient(135deg, rgba(46, 134, 222, 0.1), rgba(84, 160, 255, 0.1))',
   },
