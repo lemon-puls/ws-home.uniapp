@@ -76,6 +76,27 @@
         <view class="floating-icon icon-2">🎨</view>
         <view class="floating-icon icon-3">✨</view>
       </view>
+
+      <!-- 哆啦A梦动画 -->
+      <view class="doraemon-container">
+        <image
+          class="doraemon-image"
+          src="/static/images/doraemon.png"
+          mode="aspectFit"
+          @tap="handleDoraemonTap"
+        />
+        <view class="speech-bubble" :class="{ show: showSpeech }">
+          <view class="bubble-content">
+            <text class="greeting">你好！</text>
+            <text class="name">我是哆啦A梦~</text>
+            <view class="bubble-decoration">
+              <view class="star star-1">⭐</view>
+              <view class="star star-2">✨</view>
+              <view class="star star-3">🌟</view>
+            </view>
+          </view>
+        </view>
+      </view>
     </view>
   </view>
 </template>
@@ -155,6 +176,20 @@ const handleRefresh = async () => {
   })
   await fetchShowcasePhotos()
   uni.hideLoading()
+}
+
+// 控制对话气泡显示
+const showSpeech = ref(false)
+
+// 处理哆啦A梦点击事件
+const handleDoraemonTap = () => {
+  // 显示对话气泡
+  showSpeech.value = true
+
+  // 3秒后隐藏对话气泡
+  setTimeout(() => {
+    showSpeech.value = false
+  }, 3000)
 }
 </script>
 
@@ -534,6 +569,199 @@ const handleRefresh = async () => {
   }
   to {
     opacity: 1;
+  }
+}
+
+.doraemon-container {
+  position: fixed;
+  left: 40rpx;
+  top: 140rpx;
+  z-index: 10;
+  width: 200rpx;
+  height: 200rpx;
+  animation: floatDoraemon 3s infinite ease-in-out;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+
+  .doraemon-image {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 4rpx 8rpx rgba(0, 0, 0, 0.2));
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  .speech-bubble {
+    position: absolute;
+    top: -20rpx;
+    left: 220rpx;
+    transform: scale(0);
+    background: rgba(255, 255, 255, 0.95);
+    padding: 30rpx 40rpx;
+    min-width: 200rpx;
+    border-radius: 30rpx;
+    box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.15);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    pointer-events: none;
+    backdrop-filter: blur(10px);
+    border: 2rpx solid rgba(255, 255, 255, 0.8);
+    overflow: visible;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), transparent);
+      z-index: 0;
+      border-radius: 30rpx;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: -12rpx;
+      transform: translateY(-50%);
+      width: 24rpx;
+      height: 24rpx;
+      background: rgba(255, 255, 255, 0.95);
+      border-radius: 4rpx;
+      transform: translateY(-50%) rotate(45deg);
+      border-left: 2rpx solid rgba(255, 255, 255, 0.8);
+      border-bottom: 2rpx solid rgba(255, 255, 255, 0.8);
+      box-shadow: -4rpx 4rpx 8rpx rgba(0, 0, 0, 0.1);
+      backdrop-filter: blur(10px);
+    }
+
+    .bubble-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 12rpx;
+
+      .greeting {
+        font-size: 40rpx;
+        color: #2e86de;
+        font-weight: 700;
+        display: block;
+        text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
+        animation: bounceIn 0.5s ease-out;
+      }
+
+      .name {
+        font-size: 32rpx;
+        color: #666;
+        font-weight: 500;
+        display: block;
+        text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1);
+        animation: fadeInUp 0.5s ease-out 0.2s both;
+      }
+
+      .bubble-decoration {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+
+        .star {
+          position: absolute;
+          font-size: 28rpx;
+          animation: twinkle 1.5s infinite ease-in-out;
+        }
+
+        .star-1 {
+          top: 15rpx;
+          left: 30rpx;
+          animation-delay: 0s;
+        }
+
+        .star-2 {
+          top: 25rpx;
+          right: 30rpx;
+          animation-delay: 0.3s;
+        }
+
+        .star-3 {
+          bottom: 15rpx;
+          left: 50%;
+          transform: translateX(-50%);
+          animation-delay: 0.6s;
+        }
+      }
+    }
+
+    &.show {
+      transform: scale(1);
+      opacity: 1;
+    }
+  }
+}
+
+@keyframes floatDoraemon {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-10rpx) rotate(2deg);
+  }
+  75% {
+    transform: translateY(10rpx) rotate(-2deg);
+  }
+}
+
+@keyframes bounceIn {
+  0% {
+    opacity: 0;
+    transform: scale(0.3);
+  }
+  50% {
+    opacity: 0.9;
+    transform: scale(1.1);
+  }
+  80% {
+    opacity: 1;
+    transform: scale(0.9);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(10rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes twinkle {
+  0%,
+  100% {
+    opacity: 0.3;
+    transform: scale(0.8);
+  }
+  50% {
+    opacity: 1;
+    transform: scale(1.2);
   }
 }
 </style>
