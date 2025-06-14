@@ -574,10 +574,32 @@ const handleUploadCompressed = async () => {
 const handleUploadWithSizeType = async (sizeType: 'original' | 'compressed') => {
   try {
     const chooseRes = (await uni.chooseMedia({
-      count: 9,
+      // 最多可以选择的文件个数，这里设置为50个
+      // 注意：实际可选择的文件数量可能受设备性能、系统限制等因素影响
+      count: 50,
+
+      // 选择文件的类型
+      // ['image'] - 仅图片
+      // ['video'] - 仅视频
+      // ['image', 'video'] - 图片和视频都可以选择
       mediaType: ['image', 'video'],
+
+      // 选择文件的来源
+      // ['album'] - 仅从相册选择
+      // ['camera'] - 仅使用相机拍摄
+      // ['album', 'camera'] - 可以从相册选择或使用相机拍摄
       sourceType: ['album', 'camera'],
+
+      // 所选的图片的尺寸
+      // ['original'] - 原图
+      // ['compressed'] - 压缩图
+      // 这里根据传入的 sizeType 参数决定是原图还是压缩图
       sizeType: [sizeType],
+
+      // 使用后置摄像头
+      // 'back' - 后置摄像头
+      // 'front' - 前置摄像头
+      // 仅在 sourceType 包含 'camera' 时有效
       camera: 'back',
     })) as unknown as UniApp.ChooseMediaSuccessCallbackResult
 
