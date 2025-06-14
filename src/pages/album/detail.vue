@@ -183,21 +183,21 @@
           </view>
         </view>
 
-        <!-- 图片压缩开关 -->
-        <view class="compress-switch-bar">
-          <view class="compress-label">
-            <wd-icon name="compress" size="18px" color="#07c160"></wd-icon>
-            <text>图片压缩</text>
-          </view>
-          <switch
-            :checked="compressImage"
-            @change="(e) => (compressImage = e.detail.value)"
-            color="#07c160"
-          />
-          <text class="compress-tip">
-            {{ compressImage ? '上传前自动压缩图片，节省空间' : '上传原图，保留最佳画质' }}
-          </text>
-        </view>
+        <!--        &lt;!&ndash; 图片压缩开关 &ndash;&gt;-->
+        <!--        <view class="compress-switch-bar">-->
+        <!--          <view class="compress-label">-->
+        <!--            <wd-icon name="compress" size="18px" color="#07c160"></wd-icon>-->
+        <!--            <text>图片压缩</text>-->
+        <!--          </view>-->
+        <!--          <switch-->
+        <!--            :checked="compressImage"-->
+        <!--            @change="(e) => (compressImage = e.detail.value)"-->
+        <!--            color="#07c160"-->
+        <!--          />-->
+        <!--          <text class="compress-tip">-->
+        <!--            {{ compressImage ? '上传前自动压缩图片，节省空间' : '上传原图，保留最佳画质' }}-->
+        <!--          </text>-->
+        <!--        </view>-->
 
         <!-- 媒体列表 -->
         <view class="media-list">
@@ -321,7 +321,7 @@ const isEditing = ref(false)
 const selectedImages = ref<number[]>([])
 const filterType = ref('all')
 const imageType = ref('compressed')
-const compressImage = ref<boolean>(true) // 新增：图片压缩开关
+// const compressImage = ref<boolean>(true) // 新增：图片压缩开关
 const scrollTop = ref(0)
 const refreshing = ref(false)
 const isDescriptionExpanded = ref(false)
@@ -577,25 +577,26 @@ const handleUpload = async () => {
     // 批量上传文件
     const uploadPromises = chooseRes.tempFiles.map(async (file) => {
       let uploadFilePath = file.tempFilePath
+      // 在微信上传图片或视频均可选择是否原图，如果不是原图，会自动压缩，无需自己实现压缩
       // 如果是图片且需要压缩
-      if (compressImage.value && file.fileType === 'image') {
-        try {
-          const compressRes = await uni.compressImage({
-            src: file.tempFilePath,
-            quality: 50, // 压缩质量0-100
-          })
-          uploadFilePath = compressRes.tempFilePath
-          const fileInfo = await uni.getFileInfo({ filePath: compressRes.tempFilePath })
-          console.log(
-            '压缩前大小:',
-            (file.size / 1024 / 1024).toFixed(2) + 'M',
-            '压缩后大小:',
-            (fileInfo.size / 1024 / 1024).toFixed(2) + 'M',
-          )
-        } catch (err) {
-          console.warn('图片压缩失败，使用原图', err)
-        }
-      }
+      // if (compressImage.value && file.fileType === 'image') {
+      //   try {
+      //     const compressRes = await uni.compressImage({
+      //       src: file.tempFilePath,
+      //       quality: 50, // 压缩质量0-100
+      //     })
+      //     uploadFilePath = compressRes.tempFilePath
+      //     const fileInfo = await uni.getFileInfo({ filePath: compressRes.tempFilePath })
+      //     console.log(
+      //       '压缩前大小:',
+      //       (file.size / 1024 / 1024).toFixed(2) + 'M',
+      //       '压缩后大小:',
+      //       (fileInfo.size / 1024 / 1024).toFixed(2) + 'M',
+      //     )
+      //   } catch (err) {
+      //     console.warn('图片压缩失败，使用原图', err)
+      //   }
+      // }
 
       const fileKey = `ws-home/ablum/${albumId.value}/${Date.now()}_${uploadFilePath.split('/').pop()}`
 
