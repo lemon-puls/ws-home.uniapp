@@ -168,18 +168,24 @@
           </view>
 
           <view class="action-group">
-            <button v-if="isEditing" class="delete-btn" @tap="handleDeleteSelected">
-              <wd-icon name="delete" size="14px" color="#ffffff"></wd-icon>
-              <text>删除选定</text>
-            </button>
-            <button class="upload-btn" @tap="handleUpload">
-              <wd-icon name="upload" size="14px" color="#ffffff"></wd-icon>
-              <text>上传</text>
-            </button>
-            <button class="edit-btn" @tap="toggleEdit">
-              <wd-icon :name="isEditing ? 'check' : 'edit'" size="14px" color="#ffffff"></wd-icon>
-              <text>{{ isEditing ? '完成' : '编辑' }}</text>
-            </button>
+            <view class="button-group">
+              <button class="upload-btn original" @tap="handleUploadOriginal">
+                <wd-icon name="upload" size="14px" color="#ffffff"></wd-icon>
+                <text>原图</text>
+              </button>
+              <button class="upload-btn compressed" @tap="handleUploadCompressed">
+                <wd-icon name="upload" size="14px" color="#ffffff"></wd-icon>
+                <text>压缩</text>
+              </button>
+              <button class="edit-btn" @tap="toggleEdit">
+                <wd-icon :name="isEditing ? 'check' : 'edit'" size="14px" color="#ffffff"></wd-icon>
+                <text>{{ isEditing ? '完成' : '编辑' }}</text>
+              </button>
+              <button v-if="isEditing" class="delete-btn" @tap="handleDeleteSelected">
+                <wd-icon name="delete" size="14px" color="#ffffff"></wd-icon>
+                <text>删除</text>
+              </button>
+            </view>
           </view>
         </view>
 
@@ -555,14 +561,23 @@ const handleImageTypeChange = (type: string) => {
   fetchMediaList()
 }
 
-// 处理上传
-const handleUpload = async () => {
+// 上传原图
+const handleUploadOriginal = async () => {
+  await handleUploadWithSizeType('original')
+}
+// 上传压缩图
+const handleUploadCompressed = async () => {
+  await handleUploadWithSizeType('compressed')
+}
+
+// 通用上传逻辑
+const handleUploadWithSizeType = async (sizeType: 'original' | 'compressed') => {
   try {
     const chooseRes = (await uni.chooseMedia({
       count: 9,
       mediaType: ['image', 'video'],
       sourceType: ['album', 'camera'],
-      sizeType: ['original', 'compressed'],
+      sizeType: [sizeType],
       camera: 'back',
     })) as unknown as UniApp.ChooseMediaSuccessCallbackResult
 
@@ -570,33 +585,10 @@ const handleUpload = async () => {
       return
     }
 
-    uni.showLoading({
-      title: '上传中...',
-    })
-
     // 批量上传文件
     const uploadPromises = chooseRes.tempFiles.map(async (file) => {
-      let uploadFilePath = file.tempFilePath
-      // 在微信上传图片或视频均可选择是否原图，如果不是原图，会自动压缩，无需自己实现压缩
-      // 如果是图片且需要压缩
-      // if (compressImage.value && file.fileType === 'image') {
-      //   try {
-      //     const compressRes = await uni.compressImage({
-      //       src: file.tempFilePath,
-      //       quality: 50, // 压缩质量0-100
-      //     })
-      //     uploadFilePath = compressRes.tempFilePath
-      //     const fileInfo = await uni.getFileInfo({ filePath: compressRes.tempFilePath })
-      //     console.log(
-      //       '压缩前大小:',
-      //       (file.size / 1024 / 1024).toFixed(2) + 'M',
-      //       '压缩后大小:',
-      //       (fileInfo.size / 1024 / 1024).toFixed(2) + 'M',
-      //     )
-      //   } catch (err) {
-      //     console.warn('图片压缩失败，使用原图', err)
-      //   }
-      // }
+      const uploadFilePath = file.tempFilePath
+      const isRaw = sizeType === 'original'
 
       const fileKey = `ws-home/ablum/${albumId.value}/${Date.now()}_${uploadFilePath.split('/').pop()}`
 
@@ -634,7 +626,6 @@ const handleUpload = async () => {
             header: {
               'Content-Type': uploadFilePath.includes('image') ? 'image/jpeg' : 'video/mp4',
             },
-            // 添加证书验证配置
             sslVerify: false, // 关闭证书验证
             success: (res) => {
               console.log('上传响应:', res)
@@ -646,7 +637,6 @@ const handleUpload = async () => {
             },
             fail: (err) => {
               console.error('上传请求失败:', err)
-              // 优化错误信息显示
               let errorMsg = '上传失败'
               if (err.errMsg) {
                 if (err.errMsg.includes('ERR_CERT_AUTHORITY_INVALID')) {
@@ -685,7 +675,7 @@ const handleUpload = async () => {
           url: downloadRes.data.url,
           size: Number((file.size / 1024 / 1024).toFixed(2)), // 转换为MB并保留两位小数
           type: mediaType,
-          is_raw: false,
+          is_raw: isRaw, // 由按钮决定
           meta: mediaMeta,
         } as dto_AlbumMediaAddDTO
       } catch (error) {
@@ -716,7 +706,6 @@ const handleUpload = async () => {
     }
   } catch (error) {
     console.error('上传失败:', error)
-    // 优化错误提示
     let errorMsg = '上传失败'
     if (error instanceof Error) {
       errorMsg = error.message
@@ -1263,7 +1252,7 @@ usePageAuth()
             left: 0;
             right: 0;
             bottom: 0;
-            border: 4rpx solid #2e86de;
+            border: 4rpx solid #de2e2e;
             border-radius: 16rpx;
             box-shadow: 0 0 20rpx rgba(46, 134, 222, 0.3);
             z-index: 1;
@@ -1396,5 +1385,45 @@ usePageAuth()
   backface-visibility: hidden;
   transform: translateZ(0);
   -webkit-transform: translateZ(0);
+}
+
+.button-group {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin: 10px 0;
+}
+
+.upload-btn,
+.edit-btn,
+.delete-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 8px 16px;
+  border-radius: 4px;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background-color 0.3s;
+}
+
+.upload-btn.original {
+  background-color: #4caf50;
+  color: white;
+}
+
+.upload-btn.compressed {
+  background-color: #2196f3;
+  color: white;
+}
+
+.edit-btn {
+  background-color: #ff9800;
+  color: white;
+}
+
+.delete-btn {
+  background-color: #f44336;
+  color: white;
 }
 </style>
