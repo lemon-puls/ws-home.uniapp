@@ -97,6 +97,27 @@
           </view>
         </view>
       </view>
+
+      <!-- 蜡笔小新动画 -->
+      <view class="crayon-container">
+        <image
+          class="crayon-image"
+          src="/static/images/crayon.png"
+          mode="aspectFit"
+          @tap="handleCrayonTap"
+        />
+        <view class="crayon-bubble" :class="{ show: showCrayonSpeech }">
+          <view class="bubble-content">
+            <text class="greeting">动感超人！</text>
+            <text class="name">我是野原新之助~</text>
+            <view class="bubble-decoration">
+              <view class="star star-1">💫</view>
+              <view class="star star-2">⚡</view>
+              <view class="star star-3">💥</view>
+            </view>
+          </view>
+        </view>
+      </view>
     </view>
   </view>
 </template>
@@ -189,6 +210,20 @@ const handleDoraemonTap = () => {
   // 3秒后隐藏对话气泡
   setTimeout(() => {
     showSpeech.value = false
+  }, 3000)
+}
+
+// 控制蜡笔小新对话气泡显示
+const showCrayonSpeech = ref(false)
+
+// 处理蜡笔小新点击事件
+const handleCrayonTap = () => {
+  // 显示对话气泡
+  showCrayonSpeech.value = true
+
+  // 3秒后隐藏对话气泡
+  setTimeout(() => {
+    showCrayonSpeech.value = false
   }, 3000)
 }
 </script>
@@ -600,16 +635,16 @@ const handleDoraemonTap = () => {
     top: -20rpx;
     left: 220rpx;
     transform: scale(0);
-    background: rgba(255, 255, 255, 0.95);
+    background: rgba(255, 255, 255, 0.4);
     padding: 30rpx 40rpx;
     min-width: 200rpx;
     border-radius: 30rpx;
-    box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.15);
+    box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.05);
     opacity: 0;
     transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
     pointer-events: none;
-    backdrop-filter: blur(10px);
-    border: 2rpx solid rgba(255, 255, 255, 0.8);
+    backdrop-filter: blur(2px);
+    border: 1rpx solid rgba(255, 255, 255, 0.3);
     overflow: visible;
 
     &::before {
@@ -619,7 +654,7 @@ const handleDoraemonTap = () => {
       left: 0;
       right: 0;
       bottom: 0;
-      background: linear-gradient(135deg, rgba(255, 255, 255, 0.4), transparent);
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), transparent);
       z-index: 0;
       border-radius: 30rpx;
     }
@@ -632,13 +667,13 @@ const handleDoraemonTap = () => {
       transform: translateY(-50%);
       width: 24rpx;
       height: 24rpx;
-      background: rgba(255, 255, 255, 0.95);
+      background: rgba(255, 255, 255, 0.4);
       border-radius: 4rpx;
       transform: translateY(-50%) rotate(45deg);
-      border-left: 2rpx solid rgba(255, 255, 255, 0.8);
-      border-bottom: 2rpx solid rgba(255, 255, 255, 0.8);
-      box-shadow: -4rpx 4rpx 8rpx rgba(0, 0, 0, 0.1);
-      backdrop-filter: blur(10px);
+      border-left: 1rpx solid rgba(255, 255, 255, 0.3);
+      border-bottom: 1rpx solid rgba(255, 255, 255, 0.3);
+      box-shadow: -4rpx 4rpx 8rpx rgba(0, 0, 0, 0.05);
+      backdrop-filter: blur(2px);
     }
 
     .bubble-content {
@@ -762,6 +797,157 @@ const handleDoraemonTap = () => {
   50% {
     opacity: 1;
     transform: scale(1.2);
+  }
+}
+
+.crayon-container {
+  position: fixed;
+  left: 40rpx;
+  bottom: 0rpx;
+  z-index: 10;
+  width: 140rpx;
+  height: 140rpx;
+  animation: floatCrayon 3s infinite ease-in-out;
+  cursor: pointer;
+  -webkit-tap-highlight-color: transparent;
+  user-select: none;
+  -webkit-user-select: none;
+
+  .crayon-image {
+    width: 100%;
+    height: 100%;
+    filter: drop-shadow(0 4rpx 8rpx rgba(0, 0, 0, 0.2));
+    -webkit-tap-highlight-color: transparent;
+    user-select: none;
+    -webkit-user-select: none;
+    -webkit-touch-callout: none;
+  }
+
+  .crayon-bubble {
+    position: absolute;
+    top: -20rpx;
+    left: 160rpx;
+    transform: scale(0);
+    background: rgba(255, 255, 255, 0.4);
+    padding: 20rpx 30rpx;
+    min-width: 180rpx;
+    border-radius: 24rpx;
+    box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.05);
+    opacity: 0;
+    transition: all 0.4s cubic-bezier(0.68, -0.55, 0.265, 1.55);
+    pointer-events: none;
+    backdrop-filter: blur(2px);
+    border: 1rpx solid rgba(255, 255, 255, 0.3);
+    overflow: visible;
+
+    &::before {
+      content: '';
+      position: absolute;
+      top: 0;
+      left: 0;
+      right: 0;
+      bottom: 0;
+      background: linear-gradient(135deg, rgba(255, 255, 255, 0.15), transparent);
+      z-index: 0;
+      border-radius: 24rpx;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      top: 50%;
+      left: -10rpx;
+      transform: translateY(-50%);
+      width: 20rpx;
+      height: 20rpx;
+      background: rgba(255, 255, 255, 0.4);
+      border-radius: 4rpx;
+      transform: translateY(-50%) rotate(45deg);
+      border-left: 1rpx solid rgba(255, 255, 255, 0.3);
+      border-bottom: 1rpx solid rgba(255, 255, 255, 0.3);
+      box-shadow: -4rpx 4rpx 8rpx rgba(0, 0, 0, 0.05);
+      backdrop-filter: blur(2px);
+    }
+
+    &.show {
+      transform: scale(1);
+      opacity: 1;
+    }
+
+    .bubble-content {
+      position: relative;
+      z-index: 1;
+      text-align: center;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8rpx;
+
+      .greeting {
+        font-size: 32rpx;
+        color: #ff6b6b;
+        font-weight: 700;
+        display: block;
+        text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
+        animation: bounceIn 0.5s ease-out;
+      }
+
+      .name {
+        font-size: 26rpx;
+        color: #666;
+        font-weight: 500;
+        display: block;
+        text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.1);
+        animation: fadeInUp 0.5s ease-out 0.2s both;
+      }
+
+      .bubble-decoration {
+        position: absolute;
+        top: 0;
+        left: 0;
+        right: 0;
+        bottom: 0;
+        pointer-events: none;
+
+        .star {
+          position: absolute;
+          font-size: 24rpx;
+          animation: twinkle 1.5s infinite ease-in-out;
+        }
+
+        .star-1 {
+          top: 12rpx;
+          left: 24rpx;
+          animation-delay: 0s;
+        }
+
+        .star-2 {
+          top: 20rpx;
+          right: 24rpx;
+          animation-delay: 0.3s;
+        }
+
+        .star-3 {
+          bottom: 12rpx;
+          left: 50%;
+          transform: translateX(-50%);
+          animation-delay: 0.6s;
+        }
+      }
+    }
+  }
+}
+
+@keyframes floatCrayon {
+  0%,
+  100% {
+    transform: translateY(0) rotate(0deg);
+  }
+  25% {
+    transform: translateY(-6rpx) rotate(2deg);
+  }
+  75% {
+    transform: translateY(6rpx) rotate(-2deg);
   }
 }
 </style>
