@@ -570,7 +570,7 @@ const handleUploadCompressed = async () => {
   await handleUploadWithSizeType('compressed')
 }
 
-// 通用上传逻辑
+// 修改上传逻辑，确保请求失败时也能清理已上传的 COS 对象
 const handleUploadWithSizeType = async (sizeType: 'original' | 'compressed') => {
   try {
     const chooseRes = (await uni.chooseMedia({
@@ -592,19 +592,19 @@ const handleUploadWithSizeType = async (sizeType: 'original' | 'compressed') => 
 
       const fileKey = `ws-home/ablum/${albumId.value}/${Date.now()}_${uploadFilePath.split('/').pop()}`
 
-      // 获取预签名URL
-      const presignedRes = (await Service.postCosPresignedUrl({
-        data: {
-          key: fileKey,
-          type: 'upload',
-        },
-      })) as unknown as ApiResponse<{ url: string; key: string }>
-
-      if (presignedRes.code !== 0 || !presignedRes.data) {
-        throw new Error('获取上传 URL 失败')
-      }
-
       try {
+        // 获取预签名URL
+        const presignedRes = (await Service.postCosPresignedUrl({
+          data: {
+            key: fileKey,
+            type: 'upload',
+          },
+        })) as unknown as ApiResponse<{ url: string; key: string }>
+
+        if (presignedRes.code !== 0 || !presignedRes.data) {
+          throw new Error('获取上传 URL 失败')
+        }
+
         // 读取文件内容
         const fileContent = await new Promise<ArrayBuffer>((resolve, reject) => {
           uni.getFileSystemManager().readFile({
@@ -677,32 +677,75 @@ const handleUploadWithSizeType = async (sizeType: 'original' | 'compressed') => 
           type: mediaType,
           is_raw: isRaw, // 由按钮决定
           meta: mediaMeta,
+          key: fileKey, // 保存 COS 对象 key，用于清理
         } as dto_AlbumMediaAddDTO
       } catch (error) {
         console.error('单个文件上传失败:', error)
-        throw error
+        // 返回错误信息，而不是抛出错误，避免中断整个流程
+        return { error, key: fileKey }
       }
     })
 
-    // 等待所有文件上传完成
+    // 等待所有文件上传完成，即使部分文件失败
     const uploadResults = await Promise.all(uploadPromises)
 
-    // 保存所有文件信息到数据库
-    const saveRes = (await Service.postAlbumMedia({
-      body: {
-        album_id: albumId.value,
-        medias: uploadResults,
-      },
-    })) as unknown as ApiResponse<null>
+    // 过滤出成功上传的文件
+    const successResults = uploadResults.filter((item) => !item.error) as dto_AlbumMediaAddDTO[]
+    // 过滤出失败的文件
+    const failedResults = uploadResults.filter((item) => item.error) as {
+      error: Error
+      key: string
+    }[]
 
-    if (saveRes.code === 0) {
-      uni.showToast({
-        title: '上传成功',
-        icon: 'success',
+    // 如果有成功上传的文件，保存到数据库
+    if (successResults.length > 0) {
+      try {
+        const saveRes = (await Service.postAlbumMedia({
+          body: {
+            album_id: albumId.value,
+            medias: successResults,
+          },
+        })) as unknown as ApiResponse<null>
+
+        if (saveRes.code === 0) {
+          uni.showToast({
+            title: '上传成功',
+            icon: 'success',
+          })
+          // 刷新列表
+          fetchMediaList()
+          fetchAlbumInfo()
+        } else {
+          // 如果保存失败，清理已上传的 COS 对象
+          const keys = successResults.map((item) => item.key)
+          await Service.postCosBatchDelete({
+            data: {
+              keys,
+            },
+          })
+          throw new Error(saveRes.msg || '保存失败')
+        }
+      } catch (error) {
+        // 如果请求失败，清理已上传的 COS 对象
+        const keys = successResults.map((item) => item.key)
+        await Service.postCosBatchDelete({
+          data: {
+            keys,
+          },
+        })
+        throw error
+      }
+    }
+
+    // 如果有失败的文件，清理已上传的 COS 对象
+    if (failedResults.length > 0) {
+      const keys = failedResults.map((item) => item.key)
+      await Service.postCosBatchDelete({
+        data: {
+          keys,
+        },
       })
-      // 刷新列表
-      fetchMediaList()
-      fetchAlbumInfo()
+      throw new Error('部分文件上传失败')
     }
   } catch (error) {
     console.error('上传失败:', error)
