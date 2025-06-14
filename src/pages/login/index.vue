@@ -18,7 +18,7 @@
       <view class="login-title">{{ appTitle }}</view>
     </view>
     <view class="login-form">
-      <view class="welcome-text">欢迎登录</view>
+      <!-- <view class="welcome-text">欢迎登录</view> -->
       <view class="login-desc">请输入您的账号和密码</view>
       <view class="login-input-group">
         <view class="input-wrapper">
@@ -258,6 +258,21 @@ const handleAgreement = (type: 'user' | 'privacy') => {
 </script>
 
 <style lang="scss" scoped>
+/* 引入字体 */
+@font-face {
+  font-family: 'PingFang SC';
+  src: local('PingFang SC');
+  font-weight: 800;
+  font-display: swap;
+}
+
+@font-face {
+  font-family: 'DIN';
+  src: local('DIN');
+  font-weight: 800;
+  font-display: swap;
+}
+
 /* 验证码输入框样式 */
 .captcha-wrapper {
   .captcha-input {
@@ -373,12 +388,40 @@ const handleAgreement = (type: 'user' | 'privacy') => {
   .login-title {
     margin-top: 30rpx;
     font-size: 46rpx;
-    font-weight: 600;
-    background: linear-gradient(135deg, #333333, #666666);
+    font-weight: 800;
+    font-family:
+      'PingFang SC',
+      'DIN',
+      -apple-system,
+      BlinkMacSystemFont,
+      'Helvetica Neue',
+      sans-serif;
+    background: linear-gradient(135deg, #2e86de, #54a0ff, #2e86de);
+    background-size: 200% 200%;
     -webkit-background-clip: text;
     color: transparent;
     letter-spacing: 2rpx;
-    text-shadow: 0 4rpx 10rpx rgba(0, 0, 0, 0.05);
+    text-shadow:
+      0 2rpx 4rpx rgba(0, 0, 0, 0.1),
+      0 4rpx 8rpx rgba(46, 134, 222, 0.2),
+      0 8rpx 16rpx rgba(84, 160, 255, 0.1);
+    animation: gradientMove 8s ease infinite;
+    position: relative;
+    text-transform: uppercase;
+
+    &::before {
+      content: attr(data-text);
+      position: absolute;
+      left: 0;
+      top: 0;
+      z-index: -1;
+      background: linear-gradient(135deg, #2e86de, #54a0ff);
+      -webkit-background-clip: text;
+      color: transparent;
+      filter: blur(8rpx);
+      opacity: 0.5;
+      transform: translateY(2rpx);
+    }
   }
 }
 
@@ -737,6 +780,18 @@ const handleAgreement = (type: 'user' | 'privacy') => {
   to {
     opacity: 1;
     transform: translateY(0);
+  }
+}
+
+@keyframes gradientMove {
+  0% {
+    background-position: 0% 50%;
+  }
+  50% {
+    background-position: 100% 50%;
+  }
+  100% {
+    background-position: 0% 50%;
   }
 }
 </style>
