@@ -164,6 +164,17 @@ const handleRefresh = async () => {
   background: linear-gradient(135deg, #f6f8fd 0%, #f1f4f9 100%);
   position: relative;
   overflow: hidden;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background: radial-gradient(circle at 50% 50%, rgba(46, 134, 222, 0.05) 0%, transparent 70%);
+    pointer-events: none;
+  }
 }
 
 .bg-animation {
@@ -180,30 +191,35 @@ const handleRefresh = async () => {
     border-radius: 50%;
     background: linear-gradient(135deg, rgba(46, 134, 222, 0.1), rgba(84, 160, 255, 0.1));
     animation: float 8s infinite ease-in-out;
+    backdrop-filter: blur(5px);
+    border: 1px solid rgba(255, 255, 255, 0.1);
   }
 
   .circle-1 {
-    width: 300rpx;
-    height: 300rpx;
-    top: -100rpx;
-    right: -100rpx;
+    width: 400rpx;
+    height: 400rpx;
+    top: -150rpx;
+    right: -150rpx;
     animation-delay: 0s;
+    box-shadow: 0 0 100rpx rgba(46, 134, 222, 0.1);
   }
 
   .circle-2 {
-    width: 200rpx;
-    height: 200rpx;
+    width: 300rpx;
+    height: 300rpx;
     bottom: 20%;
-    left: -50rpx;
+    left: -100rpx;
     animation-delay: -2s;
+    box-shadow: 0 0 80rpx rgba(46, 134, 222, 0.1);
   }
 
   .circle-3 {
-    width: 250rpx;
-    height: 250rpx;
-    bottom: -100rpx;
+    width: 350rpx;
+    height: 350rpx;
+    bottom: -150rpx;
     right: 20%;
     animation-delay: -4s;
+    box-shadow: 0 0 90rpx rgba(46, 134, 222, 0.1);
   }
 }
 
@@ -224,28 +240,37 @@ const handleRefresh = async () => {
   animation: fadeInUp 1s ease-out;
 
   .logo {
-    width: 180rpx;
-    height: 180rpx;
+    width: 200rpx;
+    height: 200rpx;
     margin-bottom: 40rpx;
-    filter: drop-shadow(0 4rpx 8rpx rgba(0, 0, 0, 0.1));
+    filter: drop-shadow(0 8rpx 16rpx rgba(0, 0, 0, 0.15));
+    transition: transform 0.3s ease;
+
+    &:active {
+      transform: scale(0.95);
+    }
   }
 
   .welcome-text {
     text-align: center;
 
     .title {
-      font-size: 48rpx;
-      font-weight: 600;
+      font-size: 52rpx;
+      font-weight: 700;
       color: #333;
       margin-bottom: 16rpx;
       display: block;
+      text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
     }
 
     .subtitle {
-      font-size: 36rpx;
+      font-size: 40rpx;
       color: #2e86de;
-      font-weight: 500;
+      font-weight: 600;
       display: block;
+      background: linear-gradient(135deg, #2e86de, #54a0ff);
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
     }
   }
 }
@@ -263,15 +288,16 @@ const handleRefresh = async () => {
     position: relative;
 
     .title {
-      font-size: 36rpx;
-      font-weight: 600;
+      font-size: 40rpx;
+      font-weight: 700;
       color: #333;
       margin-bottom: 8rpx;
       display: block;
+      text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
     }
 
     .subtitle {
-      font-size: 24rpx;
+      font-size: 26rpx;
       color: #666;
       display: block;
     }
@@ -281,21 +307,32 @@ const handleRefresh = async () => {
       right: 20rpx;
       top: 50%;
       transform: translateY(-50%);
-      padding: 10rpx;
+      padding: 16rpx;
       font-size: 36rpx;
       line-height: 1;
+      background: rgba(255, 255, 255, 0.9);
+      border-radius: 50%;
+      box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.1);
+      transition: all 0.3s ease;
 
       &:active {
-        opacity: 0.7;
+        transform: translateY(-50%) scale(0.95);
+        box-shadow: 0 2rpx 6rpx rgba(0, 0, 0, 0.1);
       }
     }
   }
 
   .photo-swiper {
-    height: 400rpx;
-    border-radius: 24rpx;
+    height: 450rpx;
+    border-radius: 32rpx;
     overflow: hidden;
-    box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.1);
+    box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.15);
+    transform: translateY(0);
+    transition: transform 0.3s ease;
+
+    &:active {
+      transform: translateY(4rpx);
+    }
   }
 
   .swiper-item {
@@ -306,7 +343,7 @@ const handleRefresh = async () => {
   .photo-card {
     width: 100%;
     height: 100%;
-    border-radius: 20rpx;
+    border-radius: 32rpx;
     overflow: hidden;
     position: relative;
     animation: slideUp 0.8s ease-out forwards;
@@ -316,7 +353,7 @@ const handleRefresh = async () => {
       width: 100%;
       height: 100%;
       object-fit: cover;
-      transition: transform 0.3s ease;
+      transition: transform 0.5s ease;
     }
 
     .photo-info {
@@ -324,29 +361,31 @@ const handleRefresh = async () => {
       bottom: 0;
       left: 0;
       right: 0;
-      padding: 30rpx;
-      background: linear-gradient(to top, rgba(0, 0, 0, 0.7), transparent);
+      padding: 40rpx;
+      background: linear-gradient(to top, rgba(0, 0, 0, 0.8), transparent);
       color: #fff;
       transform: translateY(0);
       transition: all 0.3s ease;
 
       .photo-title {
-        font-size: 32rpx;
-        font-weight: 600;
-        margin-bottom: 8rpx;
+        font-size: 36rpx;
+        font-weight: 700;
+        margin-bottom: 12rpx;
         display: block;
+        text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.3);
       }
 
       .photo-desc {
-        font-size: 24rpx;
-        opacity: 0.9;
+        font-size: 26rpx;
+        opacity: 0.95;
         display: block;
+        text-shadow: 0 1rpx 2rpx rgba(0, 0, 0, 0.3);
       }
     }
 
     &:active {
       .photo-image {
-        transform: scale(1.05);
+        transform: scale(1.08);
       }
     }
   }
@@ -360,26 +399,29 @@ const handleRefresh = async () => {
   display: flex;
   align-items: center;
   padding: 40rpx;
-  background: rgba(255, 255, 255, 0.9);
-  backdrop-filter: blur(10px);
-  border-radius: 24rpx;
+  background: rgba(255, 255, 255, 0.95);
+  backdrop-filter: blur(20px);
+  border-radius: 32rpx;
   margin-bottom: 30rpx;
-  box-shadow: 0 8rpx 32rpx rgba(0, 0, 0, 0.08);
+  box-shadow: 0 12rpx 40rpx rgba(0, 0, 0, 0.1);
   transition: all 0.3s ease;
+  border: 1px solid rgba(255, 255, 255, 0.2);
 
   .menu-icon {
-    width: 80rpx;
-    height: 80rpx;
+    width: 90rpx;
+    height: 90rpx;
     background: linear-gradient(135deg, #2e86de, #54a0ff);
-    border-radius: 20rpx;
+    border-radius: 24rpx;
     display: flex;
     align-items: center;
     justify-content: center;
     margin-right: 24rpx;
+    box-shadow: 0 8rpx 20rpx rgba(46, 134, 222, 0.2);
 
     .iconfont {
-      font-size: 40rpx;
+      font-size: 44rpx;
       color: #fff;
+      text-shadow: 0 2rpx 4rpx rgba(0, 0, 0, 0.1);
     }
   }
 
@@ -387,23 +429,33 @@ const handleRefresh = async () => {
     flex: 1;
 
     .menu-title {
-      font-size: 32rpx;
-      font-weight: 600;
+      font-size: 36rpx;
+      font-weight: 700;
       color: #333;
       margin-bottom: 8rpx;
       display: block;
     }
 
     .menu-desc {
-      font-size: 24rpx;
+      font-size: 26rpx;
       color: #666;
       display: block;
     }
   }
 
   .icon-arrow-right {
-    font-size: 32rpx;
+    font-size: 36rpx;
     color: #999;
+    transition: transform 0.3s ease;
+  }
+
+  &:active {
+    transform: scale(0.98);
+    box-shadow: 0 6rpx 20rpx rgba(0, 0, 0, 0.08);
+
+    .icon-arrow-right {
+      transform: translateX(4rpx);
+    }
   }
 }
 
@@ -420,8 +472,9 @@ const handleRefresh = async () => {
 
   .floating-icon {
     position: absolute;
-    font-size: 40rpx;
+    font-size: 44rpx;
     animation: float 3s infinite ease-in-out;
+    filter: drop-shadow(0 4rpx 8rpx rgba(0, 0, 0, 0.1));
   }
 
   .icon-1 {
@@ -431,13 +484,13 @@ const handleRefresh = async () => {
   }
 
   .icon-2 {
-    bottom: 60rpx;
-    right: 60rpx;
+    bottom: 70rpx;
+    right: 70rpx;
     animation-delay: -1s;
   }
 
   .icon-3 {
-    bottom: 120rpx;
+    bottom: 140rpx;
     right: 20rpx;
     animation-delay: -2s;
   }
@@ -446,17 +499,17 @@ const handleRefresh = async () => {
 @keyframes float {
   0%,
   100% {
-    transform: translateY(0);
+    transform: translateY(0) rotate(0deg);
   }
   50% {
-    transform: translateY(-20rpx);
+    transform: translateY(-20rpx) rotate(5deg);
   }
 }
 
 @keyframes fadeInUp {
   from {
     opacity: 0;
-    transform: translateY(20rpx);
+    transform: translateY(30rpx);
   }
   to {
     opacity: 1;
@@ -467,7 +520,7 @@ const handleRefresh = async () => {
 @keyframes slideUp {
   from {
     opacity: 0;
-    transform: translateY(30rpx);
+    transform: translateY(40rpx);
   }
   to {
     opacity: 1;
