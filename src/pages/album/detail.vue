@@ -633,6 +633,8 @@ const handleUpload = async () => {
             header: {
               'Content-Type': uploadFilePath.includes('image') ? 'image/jpeg' : 'video/mp4',
             },
+            // 添加证书验证配置
+            sslVerify: false, // 关闭证书验证
             success: (res) => {
               console.log('上传响应:', res)
               if (res.statusCode >= 200 && res.statusCode < 300) {
@@ -643,7 +645,18 @@ const handleUpload = async () => {
             },
             fail: (err) => {
               console.error('上传请求失败:', err)
-              reject(new Error(`上传失败: ${JSON.stringify(err)}`))
+              // 优化错误信息显示
+              let errorMsg = '上传失败'
+              if (err.errMsg) {
+                if (err.errMsg.includes('ERR_CERT_AUTHORITY_INVALID')) {
+                  errorMsg = '证书验证失败，请检查服务器证书配置'
+                } else if (err.errMsg.includes('timeout')) {
+                  errorMsg = '上传超时，请检查网络连接'
+                } else if (err.errMsg.includes('fail')) {
+                  errorMsg = '网络请求失败，请检查网络连接'
+                }
+              }
+              reject(new Error(errorMsg))
             },
           })
         })
@@ -666,10 +679,6 @@ const handleUpload = async () => {
 
         const mediaType = file.fileType === 'image' ? 0 : 1 // 0 for image, 1 for video
         const mediaMeta: dto_MediaMetaDTO = {}
-        // 小程序 chooseMedia 返回的 tempFiles[i].thumbTempFilePath 仅视频有此属性
-        // if (mediaType === 1 && file.thumbTempFilePath) {
-        //   mediaMeta.poster = file.thumbTempFilePath;
-        // }
 
         return {
           url: downloadRes.data.url,
@@ -706,9 +715,15 @@ const handleUpload = async () => {
     }
   } catch (error) {
     console.error('上传失败:', error)
+    // 优化错误提示
+    let errorMsg = '上传失败'
+    if (error instanceof Error) {
+      errorMsg = error.message
+    }
     uni.showToast({
-      title: '上传失败',
+      title: errorMsg,
       icon: 'none',
+      duration: 3000,
     })
   } finally {
     uni.hideLoading()

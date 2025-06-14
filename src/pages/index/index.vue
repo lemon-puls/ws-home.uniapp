@@ -22,7 +22,7 @@
         <image class="logo" src="/static/logo.png" mode="aspectFit" />
         <view class="welcome-text">
           <text class="title">欢迎来到</text>
-          <text class="subtitle">我的相册空间</text>
+          <text class="subtitle">我们的相册空间</text>
         </view>
       </view>
 

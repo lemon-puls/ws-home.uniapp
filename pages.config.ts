@@ -20,7 +20,7 @@ export default defineUniPages({
   // 如果不需要tabBar，推荐使用 spa 模板。（pnpm create xxx -t spa）
   tabBar: {
     color: '#999999',
-    selectedColor: '#018d71',
+    selectedColor: '#589ef7',
     backgroundColor: '#F8F8F8',
     borderStyle: 'black',
     height: '50px',

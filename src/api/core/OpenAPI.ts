@@ -20,7 +20,8 @@ export type OpenAPIConfig = {
 }
 
 export const OpenAPI: OpenAPIConfig = {
-  BASE: 'http://localhost:8080/api',
+  // 此处不配置 base，会使用配置文件的地址
+  BASE: '',
   VERSION: '1.0',
   WITH_CREDENTIALS: false,
   CREDENTIALS: 'include',

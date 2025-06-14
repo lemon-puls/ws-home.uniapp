@@ -16,7 +16,7 @@
   },
   "tabBar": {
     "color": "#999999",
-    "selectedColor": "#018d71",
+    "selectedColor": "#589ef7",
     "backgroundColor": "#F8F8F8",
     "borderStyle": "black",
     "height": "50px",
@@ -29,12 +29,6 @@
         "selectedIconPath": "static/tabbar/homeHL.png",
         "pagePath": "pages/index/index",
         "text": "首页"
-      },
-      {
-        "iconPath": "static/tabbar/upload.png",
-        "selectedIconPath": "static/tabbar/uploadHL.png",
-        "pagePath": "pages/upload/index",
-        "text": "上传"
       },
       {
         "iconPath": "static/tabbar/stats.png",
@@ -61,6 +55,10 @@
     },
     {
       "path": "pages/album/detail",
+      "type": "page"
+    },
+    {
+      "path": "pages/album/edit",
       "type": "page"
     },
     {

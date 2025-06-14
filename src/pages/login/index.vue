@@ -134,7 +134,7 @@ import { ICaptcha } from '@/api/login.typings'
 const redirectRoute = ref('')
 
 // 获取环境变量
-const appTitle = ref(import.meta.env.VITE_APP_TITLE || 'Unibest Login')
+const appTitle = ref(import.meta.env.VITE_APP_TITLE || 'WS Home')
 const appLogo = ref(import.meta.env.VITE_APP_LOGO || '/static/logo.svg')
 
 // 初始化store
@@ -360,7 +360,7 @@ const handleAgreement = (type: 'user' | 'privacy') => {
     width: 200rpx;
     height: 200rpx;
     border-radius: 40rpx;
-    box-shadow: 0 15rpx 50rpx rgba(0, 0, 0, 0.1);
+    //box-shadow: 0 15rpx 50rpx rgba(0, 0, 0, 0.1);
     transition: all 0.5s cubic-bezier(0.4, 0, 0.2, 1);
     transform-origin: center;
 
