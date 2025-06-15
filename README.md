@@ -1,93 +1,100 @@
-<p align="center">
-  <a href="https://github.com/feige996/unibest">
-    <img width="160" src="./src/static/logo.svg">
-  </a>
-</p>
+# 相册管理系统
 
-<h1 align="center">
-  <a href="https://github.com/feige996/unibest" target="_blank">unibest - 最好的 uniapp 开发框架</a>
-</h1>
+基于 uni-app 开发的跨平台相册管理系统，支持多端运行，提供完整的相册管理功能。
 
-<div align="center">
-旧仓库 codercup 进不去了，star 也拿不回来，这里也展示一下那个地址的 star.
+> [前往后端](https://github.com/lemon-puls/txing-oj-backend)
 
-[![GitHub Repo stars](https://img.shields.io/github/stars/codercup/unibest?style=flat&logo=github)](https://github.com/codercup/unibest)
-[![GitHub forks](https://img.shields.io/github/forks/codercup/unibest?style=flat&logo=github)](https://github.com/codercup/unibest)
+> [前往 Web 端](https://github.com/lemon-puls/ws-home)
 
-</div>
+## ✨ 特性
 
-<div align="center">
+- 📱 跨平台支持：一套代码，同时运行在 iOS、Android、H5、以及各种小程序平台
+- 🎨 现代化 UI：采用 wot-design-uni 组件库，提供美观的用户界面
+- 🔒 数据安全：支持本地存储和云端同步，确保数据安全
+- 🚀 高性能：基于 Vue 3 + TypeScript 开发，提供流畅的用户体验
+- 📦 模块化：采用组件化开发，代码结构清晰，易于维护
+- 🌈 主题定制：支持自定义主题，满足个性化需求
 
-[![GitHub Repo stars](https://img.shields.io/github/stars/feige996/unibest?style=flat&logo=github)](https://github.com/feige996/unibest)
-[![GitHub forks](https://img.shields.io/github/forks/feige996/unibest?style=flat&logo=github)](https://github.com/feige996/unibest)
-[![star](https://gitee.com/feige996/unibest/badge/star.svg?theme=dark)](https://gitee.com/feige996/unibest/stargazers)
-[![fork](https://gitee.com/feige996/unibest/badge/fork.svg?theme=dark)](https://gitee.com/feige996/unibest/members)
-![node version](https://img.shields.io/badge/node-%3E%3D18-green)
-![pnpm version](https://img.shields.io/badge/pnpm-%3E%3D7.30-green)
-![GitHub package.json version (subfolder of monorepo)](https://img.shields.io/github/package-json/v/feige996/unibest)
-![GitHub License](https://img.shields.io/github/license/feige996/unibest)
+## 🛠️ 技术栈
 
-</div>
+- 框架：Vue 3 + TypeScript
+- 跨端框架：uni-app
+- 状态管理：Pinia
+- UI 组件：wot-design-uni
+- 构建工具：Vite
+- 代码规范：ESLint + Prettier
+- 包管理器：pnpm
 
-`unibest` —— 最好的 `uniapp` 开发模板，由 `uniapp` + `Vue3` + `Ts` + `Vite5` + `UnoCss` + `wot-ui` + `z-paging` 构成，使用了最新的前端技术栈，无需依靠 `HBuilderX`，通过命令行方式运行 `web`、`小程序` 和 `App`（编辑器推荐 `VSCode`，可选 `webstorm`）。
+## 📦 安装
 
-`unibest` 内置了 `约定式路由`、`layout布局`、`请求封装`、`请求拦截`、`登录拦截`、`UnoCSS`、`i18n多语言` 等基础功能，提供了 `代码提示`、`自动格式化`、`统一配置`、`代码片段` 等辅助功能，让你编写 `uniapp` 拥有 `best` 体验 （ `unibest 的由来`）。
+```bash
+# 克隆项目
+git clone git@github.com:lemon-puls/ws-home.uniapp.git
 
-![](https://raw.githubusercontent.com/andreasbm/readme/master/screenshots/lines/rainbow.png)
+# 进入项目目录
+cd ws-home.uniapp
 
-<p align="center">
-  <a href="https://unibest.tech/" target="_blank">📖 文档地址(new)</a>
-  <span style="margin:0 10px;">|</span>
-  <a href="https://feige996.github.io/hello-unibest/" target="_blank">📱 DEMO 地址</a>
-</p>
+# 安装依赖
+pnpm install
 
----
+# 启动开发服务器
+pnpm dev:h5  # 开发 H5 版本
+pnpm dev:mp-weixin  # 开发微信小程序版本
+pnpm dev:app  # 开发 App 版本
+```
 
-注意旧的地址 [codercup](https://github.com/codercup/unibest) 我进不去了，使用新的 [feige996](https://github.com/feige996/unibest)。PR和 issue 也请使用新地址，否则无法合并。
+## 🚀 开发
 
-## 平台兼容性
+```bash
+# 开发 H5 版本
+pnpm dev:h5
 
-| H5  | IOS | 安卓 | 微信小程序 | 字节小程序 | 快手小程序 | 支付宝小程序 | 钉钉小程序 | 百度小程序 |
-| --- | --- | ---- | ---------- | ---------- | ---------- | ------------ | ---------- | ---------- |
-| √   | √   | √    | √          | √          | √          | √            | √          | √          |
+# 开发微信小程序版本
+pnpm dev:mp-weixin
 
-注意每种 `UI框架` 支持的平台有所不同，详情请看各 `UI框架` 的官网，也可以看 `unibest` 文档。
+# 开发 App 版本
+pnpm dev:app
 
-## ⚙️ 环境
+# 构建生产版本
+pnpm build:h5  # 构建 H5 版本
+pnpm build:mp-weixin  # 构建微信小程序版本
+pnpm build:app  # 构建 App 版本
+```
 
-- node>=18
-- pnpm>=7.30
-- Vue Official>=2.1.10
-- TypeScript>=5.0
+## 📁 项目结构
 
-## &#x1F4C2; 快速开始
+```
+├── src                    # 源代码目录
+│   ├── api               # API 接口
+│   ├── components        # 公共组件
+│   ├── pages            # 页面文件
+│   ├── static           # 静态资源
+│   ├── store            # 状态管理
+│   ├── utils            # 工具函数
+│   └── style            # 全局样式
+├── env.sample           # 环境变量示例
+├── vite.config.ts       # Vite 配置
+└── package.json         # 项目依赖
+```
 
-执行 `pnpm create unibest` 创建项目
-执行 `pnpm i` 安装依赖
-执行 `pnpm dev` 运行 `H5`
-执行 `pnpm dev:mp` 运行 `微信小程序`
+## 🔧 环境要求
 
-## 📦 运行（支持热更新）
+- Node.js >= 18
+- pnpm >= 7.30
 
-- web平台： `pnpm dev:h5`, 然后打开 [http://localhost:9000/](http://localhost:9000/)。
-- weixin平台：`pnpm dev:mp-weixin` 然后打开微信开发者工具，导入本地文件夹，选择本项目的`dist/dev/mp-weixin` 文件。
-- APP平台：`pnpm dev:app`, 然后打开 `HBuilderX`，导入刚刚生成的`dist/dev/app` 文件夹，选择运行到模拟器(开发时优先使用)，或者运行的安卓/ios基座。
+## 📝 开发规范
 
-## 🔗 发布
+- 使用 TypeScript 进行开发
+- 遵循 ESLint 和 Prettier 的代码规范
+- 使用 Git Flow 工作流
+- 遵循组件化开发原则
 
-- web平台： `pnpm build:h5`，打包后的文件在 `dist/build/h5`，可以放到web服务器，如nginx运行。如果最终不是放在根目录，可以在 `manifest.config.ts` 文件的 `h5.router.base` 属性进行修改。
-- weixin平台：`pnpm build:mp-weixin`, 打包后的文件在 `dist/build/mp-weixin`，然后通过微信开发者工具导入，并点击右上角的“上传”按钮进行上传。
-- APP平台：`pnpm build:app`, 然后打开 `HBuilderX`，导入刚刚生成的`dist/build/app` 文件夹，选择发行 - APP云打包。
+## 🤝 贡献指南
 
-## 📄 License
+1. Fork 本仓库
+2. 创建你的特性分支 (`git checkout -b feature/AmazingFeature`)
+3. 提交你的更改 (`git commit -m 'Add some AmazingFeature'`)
+4. 推送到分支 (`git push origin feature/AmazingFeature`)
+5. 开启一个 Pull Request
 
-[MIT](https://opensource.org/license/mit/)
-
-Copyright (c) 2025 菲鸽
-
-## 捐赠
-
-<p align='center'>
-<img alt="special sponsor appwrite" src="https://oss.laf.run/ukw0y1-site/pay/wepay.png" height="330" style="display:inline-block; height:330px;">
-<img alt="special sponsor appwrite" src="https://oss.laf.run/ukw0y1-site/pay/alipay.jpg" height="330" style="display:inline-block; height:330px; margin-left:10px;">
-</p>
+感谢所有为本项目做出贡献的开发者！
