@@ -17,6 +17,51 @@
       </view>
     </view>
 
+    <!-- 添加搜索和排序区域 -->
+    <view class="search-sort-bar">
+      <view class="search-box">
+        <wd-icon name="search" size="16px" color="#999999"></wd-icon>
+        <input
+          v-model="searchName"
+          placeholder="搜索相册名称"
+          class="search-input"
+          @input="handleSearch"
+        />
+        <wd-icon
+          v-if="searchName"
+          name="close"
+          size="16px"
+          color="#999999"
+          @click="clearSearch"
+        ></wd-icon>
+      </view>
+      <view class="sort-box" @tap="showSortOptions = true">
+        <text>{{ sortOptions.find((opt) => opt.value === currentSort)?.label || '排序方式' }}</text>
+        <wd-icon name="arrow-down" size="16px" color="#666666"></wd-icon>
+      </view>
+    </view>
+
+    <!-- 排序选项弹窗 -->
+    <view v-if="showSortOptions" class="sort-popup-mask" @tap="showSortOptions = false">
+      <view class="sort-popup" @tap.stop>
+        <view
+          v-for="option in sortOptions"
+          :key="option.value"
+          class="sort-option"
+          :class="{ active: currentSort === option.value }"
+          @tap="handleSortChange(option.value)"
+        >
+          <text>{{ option.label }}</text>
+          <wd-icon
+            v-if="currentSort === option.value"
+            name="check"
+            size="16px"
+            color="#2e86de"
+          ></wd-icon>
+        </view>
+      </view>
+    </view>
+
     <scroll-view
       scroll-y
       class="album-list"
@@ -214,6 +259,22 @@ const editAlbum = ref({
   description: '',
 })
 
+// 添加搜索和排序相关的响应式变量
+const searchName = ref('')
+const showSortOptions = ref(false)
+const currentSort = ref('start_time_desc')
+
+const sortOptions = [
+  { label: '开始时间最新', value: 'start_time_desc' },
+  { label: '开始时间最早', value: 'start_time_asc' },
+  { label: '创建时间最新', value: 'create_time_desc' },
+  { label: '创建时间最早', value: 'create_time_asc' },
+  { label: '更新时间最新', value: 'update_time_desc' },
+  { label: '更新时间最早', value: 'update_time_asc' },
+  // { label: '名称 A-Z', value: 'name_asc' },
+  // { label: '名称 Z-A', value: 'name_desc' },
+]
+
 usePageAuth()
 
 // 获取相册列表
@@ -222,9 +283,15 @@ const fetchAlbums = async (isLoadMore = false) => {
 
   try {
     isLoading.value = true
+    const lastUnderscoreIndex = currentSort.value.lastIndexOf('_')
+    const orderBy = currentSort.value.substring(0, lastUnderscoreIndex)
+    const order = currentSort.value.substring(lastUnderscoreIndex + 1)
     const response = (await Service.getAlbumList({
       page: currentPage.value,
       limit: pageSize.value,
+      orderBy,
+      order,
+      name: searchName.value,
     })) as unknown as AlbumListResponse
 
     if (response?.code === 0 && response?.data?.records) {
@@ -426,18 +493,23 @@ const handleDelete = () => {
   })
 }
 
-// 格式化文件大小
-// const formatSize = (size: number) => {
-//   if (size < 1024) {
-//     return size + 'B'
-//   } else if (size < 1024 * 1024) {
-//     return (size / 1024).toFixed(1) + 'KB'
-//   } else if (size < 1024 * 1024 * 1024) {
-//     return (size / (1024 * 1024)).toFixed(1) + 'MB'
-//   } else {
-//     return (size / (1024 * 1024 * 1024)).toFixed(1) + 'GB'
-//   }
-// }
+// 处理搜索
+const handleSearch = () => {
+  resetList()
+}
+
+// 清除搜索
+const clearSearch = () => {
+  searchName.value = ''
+  resetList()
+}
+
+// 处理排序变化
+const handleSortChange = (value: string) => {
+  currentSort.value = value
+  showSortOptions.value = false
+  resetList()
+}
 
 onMounted(() => {
   fetchAlbums()
@@ -912,6 +984,87 @@ onUnmounted(() => {
   }
   to {
     opacity: 1;
+  }
+}
+
+.search-sort-bar {
+  position: relative;
+  z-index: 2;
+  display: flex;
+  gap: 20rpx;
+  margin-bottom: 30rpx;
+  padding: 0 10rpx;
+
+  .search-box {
+    flex: 1;
+    height: 72rpx;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 36rpx;
+    display: flex;
+    align-items: center;
+    padding: 0 24rpx;
+    gap: 12rpx;
+    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+
+    .search-input {
+      flex: 1;
+      height: 100%;
+      font-size: 28rpx;
+      color: #333;
+    }
+  }
+
+  .sort-box {
+    height: 72rpx;
+    background: rgba(255, 255, 255, 0.9);
+    border-radius: 36rpx;
+    display: flex;
+    align-items: center;
+    padding: 0 24rpx;
+    gap: 8rpx;
+    box-shadow: 0 4rpx 12rpx rgba(0, 0, 0, 0.05);
+    font-size: 28rpx;
+    color: #666;
+  }
+}
+
+.sort-popup-mask {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background-color: rgba(0, 0, 0, 0.6);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 999;
+  animation: fadeIn 0.3s ease;
+}
+
+.sort-popup {
+  background-color: #fff;
+  border-radius: 24rpx;
+  width: 400rpx;
+  overflow: hidden;
+  animation: popup-in 0.3s ease;
+
+  .sort-option {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 30rpx;
+    font-size: 32rpx;
+    color: #333;
+    transition: all 0.3s ease;
+
+    &:active {
+      background-color: #f5f5f5;
+    }
+
+    &.active {
+      color: #2e86de;
+    }
   }
 }
 </style>
