@@ -47,7 +47,15 @@
         >
           <swiper-item v-for="(photo, index) in showcasePhotos" :key="index" class="swiper-item">
             <view class="photo-card" :style="{ animationDelay: index * 0.2 + 's' }">
-              <image :src="photo.url" mode="aspectFill" class="photo-image" />
+              <image
+                :src="photo.url"
+                mode="aspectFill"
+                class="photo-image"
+                :webp="true"
+                :show-menu-by-longpress="true"
+                :show-loading="true"
+                loading="lazy"
+              />
               <view class="photo-info">
                 <text class="photo-title">{{ photo.title }}</text>
                 <text class="photo-desc">{{ photo.description }}</text>
