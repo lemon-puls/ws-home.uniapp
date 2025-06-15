@@ -281,6 +281,7 @@ import { formatDate, formatDateSimple } from '@/utils/date'
 import type { dto_AlbumMediaAddDTO } from '@/api/models/dto_AlbumMediaAddDTO'
 import type { dto_MediaMetaDTO } from '@/api/models/dto_MediaMetaDTO'
 import { usePageAuth } from '@/hooks/usePageAuth'
+import { formatSize } from '../../utils/format'
 
 interface ApiResponse<T> {
   code: number
@@ -789,19 +790,19 @@ const handleUploadWithSizeType = async (sizeType: 'original' | 'compressed') => 
 const handleScroll = (e: any) => {
   scrollTop.value = e.detail.scrollTop
 }
-
-// 格式化文件大小
-const formatSize = (size: number) => {
-  if (size < 1024) {
-    return size + 'B'
-  } else if (size < 1024 * 1024) {
-    return (size / 1024).toFixed(1) + 'KB'
-  } else if (size < 1024 * 1024 * 1024) {
-    return (size / (1024 * 1024)).toFixed(1) + 'MB'
-  } else {
-    return (size / (1024 * 1024 * 1024)).toFixed(1) + 'GB'
-  }
-}
+//
+// // 格式化文件大小
+// const formatSize = (size: number) => {
+//   if (size < 1024) {
+//     return size + 'B'
+//   } else if (size < 1024 * 1024) {
+//     return (size / 1024).toFixed(1) + 'KB'
+//   } else if (size < 1024 * 1024 * 1024) {
+//     return (size / (1024 * 1024)).toFixed(1) + 'MB'
+//   } else {
+//     return (size / (1024 * 1024 * 1024)).toFixed(1) + 'GB'
+//   }
+// }
 
 // 切换描述展开/收起
 const toggleDescription = () => {
