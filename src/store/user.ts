@@ -46,15 +46,25 @@ export const useUserStore = defineStore(
      * @returns R<IUserLogin>
      */
     const login = async (credentials: {
-      username: string
+      phone: string
       password: string
       code: string
       uuid: string
     }) => {
-      const res = await _login(credentials)
-      console.log('登录信息', res)
+      const res = await Service.postUserLogin({
+        body: credentials,
+      })
+      // 保存 accessToken 和 refreshToken
+      if (res?.data) {
+        const { accessToken, refreshToken, userVO } = res.data
+        uni.setStorageSync('accessToken', accessToken)
+        uni.setStorageSync('refreshToken', refreshToken)
+
+        console.log('微信登录成功', userVO)
+        // 将 accessToken 存到 userInfo 里，便于拦截器读取
+        setUserInfo({ ...userVO, token: accessToken })
+      }
       toast.success('登录成功')
-      getUserInfo()
       return res
     }
     /**
@@ -78,20 +88,8 @@ export const useUserStore = defineStore(
       const data = await getWxCode()
       console.log('微信登录code', data)
 
-      const res = await Service.postUserLogin({
-        body: data,
-      })
-      console.log('微信登录结果', res)
-      // 保存 accessToken 和 refreshToken
-      if (res?.data) {
-        const { accessToken, refreshToken, userVO } = res.data
-        uni.setStorageSync('accessToken', accessToken)
-        uni.setStorageSync('refreshToken', refreshToken)
+      const res = await login(data)
 
-        console.log('微信登录成功', userVO)
-        // 将 accessToken 存到 userInfo 里，便于拦截器读取
-        setUserInfo({ ...userVO, token: accessToken })
-      }
       // 登录后不再调用 getUserInfo
       // getUserInfo()
       return res

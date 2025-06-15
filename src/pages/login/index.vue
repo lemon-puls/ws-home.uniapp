@@ -23,9 +23,9 @@
       <view class="login-input-group">
         <view class="input-wrapper">
           <wd-input
-            v-model="loginForm.username"
+            v-model="loginForm.phone"
             prefix-icon="user"
-            placeholder="请输入用户名"
+            placeholder="请输入账号"
             clearable
             class="login-input"
             :border="false"
@@ -104,21 +104,21 @@
       </view>
     </view>
     <!-- 隐私协议勾选 -->
-    <view class="privacy-agreement">
-      <wd-checkbox
-        v-model="agreePrivacy"
-        shape="square"
-        class="privacy-checkbox"
-        active-color="var(--wot-color-theme, #1989fa)"
-      >
-        <view class="agreement-text">
-          我已阅读并同意
-          <text class="agreement-link" @click.stop="handleAgreement('user')">《用户协议》</text>
-          和
-          <text class="agreement-link" @click.stop="handleAgreement('privacy')">《隐私政策》</text>
-        </view>
-      </wd-checkbox>
-    </view>
+    <!--    <view class="privacy-agreement">-->
+    <!--      <wd-checkbox-->
+    <!--        v-model="agreePrivacy"-->
+    <!--        shape="square"-->
+    <!--        class="privacy-checkbox"-->
+    <!--        active-color="var(&#45;&#45;wot-color-theme, #1989fa)"-->
+    <!--      >-->
+    <!--        <view class="agreement-text">-->
+    <!--          我已阅读并同意-->
+    <!--          <text class="agreement-link" @click.stop="handleAgreement('user')">《用户协议》</text>-->
+    <!--          和-->
+    <!--          <text class="agreement-link" @click.stop="handleAgreement('privacy')">《隐私政策》</text>-->
+    <!--        </view>-->
+    <!--      </wd-checkbox>-->
+    <!--    </view>-->
     <view class="login-footer"></view>
   </view>
 </template>
@@ -148,7 +148,7 @@ const captcha = ref<ICaptcha>({
 })
 // 登录表单数据
 const loginForm = ref<ILoginForm>({
-  username: '',
+  phone: '',
   password: '',
   code: '',
   uuid: '',
@@ -175,7 +175,7 @@ const handleAccountLogin = async () => {
     return
   }
   // 表单验证
-  if (!loginForm.value.username) {
+  if (!loginForm.value.phone) {
     toast.error('请输入用户名')
     return
   }
