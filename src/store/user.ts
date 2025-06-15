@@ -110,7 +110,7 @@ export const useUserStore = defineStore(
       try {
         await Service.putUser({
           body: {
-            userName: data.username,
+            userName: data.userName,
             avatar: data.avatar,
           },
         })
