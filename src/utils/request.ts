@@ -3,7 +3,7 @@ import type { RequestOptions } from '@/api/core/request'
 // 基础配置
 const baseConfig = {
   baseURL: 'http://localhost:8080', // 替换为您的实际API地址
-  timeout: 10000,
+  timeout: 120000,
   header: {
     'Content-Type': 'application/json',
   },
