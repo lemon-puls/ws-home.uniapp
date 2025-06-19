@@ -67,7 +67,7 @@
                 :focus="isEditingDescription"
                 @blur="saveDescription"
                 @confirm="saveDescription"
-                maxlength="1000"
+                :maxlength="1000"
                 auto-height
               />
               <view v-if="albumInfo.description" class="description-actions">
@@ -270,13 +270,79 @@
         </view>
       </view>
     </scroll-view>
+
+    <!-- 上传进度显示 -->
+    <view class="upload-progress-overlay" v-if="isUploading">
+      <view class="upload-progress-container">
+        <view class="progress-circle-container">
+          <canvas
+            canvas-id="progressCanvas"
+            class="progress-canvas"
+            style="width: 120px; height: 120px"
+          ></canvas>
+          <view class="progress-text">
+            <text class="progress-number">{{ uploadCurrent }}/{{ uploadTotal }}</text>
+          </view>
+        </view>
+        <text class="upload-status-text">正在上传，请稍候...</text>
+        <button class="cancel-upload-btn" @tap="cancelUpload">
+          <wd-icon name="close" size="14px" color="#ffffff"></wd-icon>
+          <text>取消上传</text>
+        </button>
+      </view>
+    </view>
   </view>
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, watch, nextTick } from 'vue'
 import { Service } from '@/api/services/Service'
 import { onLoad } from '@dcloudio/uni-app'
+
+// 绘制进度圆环
+const drawProgress = () => {
+  try {
+    const ctx = uni.createCanvasContext('progressCanvas', this)
+    const canvasSize = 120 // 与样式中定义的大小一致
+    const centerX = canvasSize / 2
+    const centerY = canvasSize / 2
+    const radius = Math.min(centerX, centerY) - 10
+    const lineWidth = 6
+
+    // 清空画布
+    ctx.clearRect(0, 0, canvasSize, canvasSize)
+
+    // 绘制底圆
+    ctx.beginPath()
+    ctx.arc(centerX, centerY, radius, 0, Math.PI * 2, false)
+    ctx.setStrokeStyle('#f1f1f1')
+    ctx.setLineWidth(lineWidth)
+    ctx.stroke()
+
+    // 绘制进度
+    const progress = uploadProgress.value
+    if (progress > 0) {
+      ctx.beginPath()
+      ctx.arc(
+        centerX,
+        centerY,
+        radius,
+        -Math.PI / 2,
+        -Math.PI / 2 + (progress / 100) * Math.PI * 2,
+        false,
+      )
+      ctx.setStrokeStyle('#2e86de')
+      ctx.setLineWidth(lineWidth)
+      ctx.stroke()
+    }
+
+    // 绘制到画布
+    ctx.draw()
+  } catch (error) {
+    console.error('绘制进度圆环失败:', error)
+  }
+}
+
 import { formatDate, formatDateSimple } from '@/utils/date'
 import type { dto_AlbumMediaAddDTO } from '@/api/models/dto_AlbumMediaAddDTO'
 import type { dto_MediaMetaDTO } from '@/api/models/dto_MediaMetaDTO'
@@ -318,6 +384,16 @@ interface MediaItem {
   }
 }
 
+// 自定义类型，用于上传过程
+interface UploadItem extends dto_AlbumMediaAddDTO {
+  key: string
+}
+
+interface UploadError {
+  error: Error
+  key: string
+}
+
 const albumId = ref<number>(0)
 const albumInfo = ref<AlbumInfo>({} as AlbumInfo)
 const mediaList = ref<MediaItem[]>([])
@@ -336,6 +412,34 @@ const isEditingTitle = ref(false)
 const isEditingDescription = ref(false)
 const editingTitle = ref('')
 const editingDescription = ref('')
+
+// 上传相关状态
+const isUploading = ref(false)
+const uploadProgress = ref(0)
+const uploadTotal = ref(0)
+const uploadCurrent = ref(0)
+interface RequestController {
+  abort: () => void
+}
+
+const uploadCancelToken = ref<{
+  isCancelled: boolean
+  keys: string[]
+  abortControllers: RequestController[]
+}>({
+  isCancelled: false,
+  keys: [] as string[],
+  abortControllers: [] as RequestController[],
+})
+
+// 监听进度变化
+watch(
+  uploadProgress,
+  (newVal: number, oldVal: number) => {
+    drawProgress()
+  },
+  { immediate: true },
+)
 
 // 筛选类型选项
 const filterTypeOptions = [
@@ -608,8 +712,35 @@ const handleUploadWithSizeType = async (sizeType: 'original' | 'compressed') => 
       return
     }
 
+    // 初始化上传状态
+    isUploading.value = true
+    uploadTotal.value = chooseRes.tempFiles.length
+    uploadCurrent.value = 0
+    uploadProgress.value = 0
+    uploadCancelToken.value = {
+      isCancelled: false,
+      keys: [] as string[],
+    }
+
+    // 初始化上传状态
+    uploadCancelToken.value = {
+      isCancelled: false,
+      keys: [],
+      abortControllers: [] as RequestController[],
+    }
+
     // 批量上传文件
-    const uploadPromises = chooseRes.tempFiles.map(async (file) => {
+    const uploadPromises = chooseRes.tempFiles.map(async (file, index) => {
+      // 为每个上传创建一个 AbortController
+      const abortController = new AbortController()
+      uploadCancelToken.value.abortControllers.push(abortController)
+
+      // 如果已取消，则不继续上传
+      if (uploadCancelToken.value.isCancelled) {
+        console.log('检测到取消标记，停止上传')
+        throw new Error('上传已取消')
+      }
+
       const uploadFilePath = file.tempFilePath
       const isRaw = sizeType === 'original'
 
@@ -640,9 +771,14 @@ const handleUploadWithSizeType = async (sizeType: 'original' | 'compressed') => 
           })
         })
 
+        // 检查是否已取消
+        if (uploadCancelToken.value.isCancelled) {
+          throw new Error('上传已取消')
+        }
+
         // 使用request直接发送文件内容
         const uploadResult = await new Promise((resolve, reject) => {
-          uni.request({
+          const requestTask = uni.request({
             url: presignedRes.data.url,
             method: 'PUT',
             data: fileContent,
@@ -673,9 +809,33 @@ const handleUploadWithSizeType = async (sizeType: 'original' | 'compressed') => 
               reject(new Error(errorMsg))
             },
           })
+
+          // 检查是否已取消
+          if (uploadCancelToken.value.isCancelled) {
+            requestTask.abort()
+            reject(new Error('上传已取消'))
+            return
+          }
+
+          // 保存请求任务，以便取消时中断
+          uploadCancelToken.value.abortControllers.push({
+            abort: () => requestTask.abort(),
+          })
         })
 
+        // 检查是否已取消
+        if (uploadCancelToken.value.isCancelled) {
+          throw new Error('上传已取消')
+        }
+
         console.log('上传成功:', uploadResult)
+
+        // 更新上传进度
+        uploadCurrent.value++
+        uploadProgress.value = (uploadCurrent.value / uploadTotal.value) * 100
+
+        // 记录已上传的key，用于可能的取消操作
+        uploadCancelToken.value.keys.push(fileKey)
 
         // 获取文件访问路径
         const downloadRes = (await Service.postCosPresignedUrl({
@@ -701,24 +861,46 @@ const handleUploadWithSizeType = async (sizeType: 'original' | 'compressed') => 
           is_raw: isRaw, // 由按钮决定
           meta: mediaMeta,
           key: fileKey, // 保存 COS 对象 key，用于清理
-        } as dto_AlbumMediaAddDTO
+        } as dto_AlbumMediaAddDTO & { key: string }
       } catch (error) {
         console.error('单个文件上传失败:', error)
+        // 如果是取消导致的错误，直接抛出
+        if (error.message === '上传已取消') {
+          throw error
+        }
         // 返回错误信息，而不是抛出错误，避免中断整个流程
         return { error, key: fileKey }
       }
     })
 
-    // 等待所有文件上传完成，即使部分文件失败
-    const uploadResults = await Promise.all(uploadPromises)
+    let uploadResults: (UploadItem | UploadError)[] = []
+    try {
+      // 等待所有文件上传完成
+      uploadResults = (await Promise.all(uploadPromises)) as (UploadItem | UploadError)[]
+    } catch (error) {
+      console.error('上传过程中发生错误:', error)
+      // 如果是取消导致的错误，清理已上传的文件
+      if (uploadCancelToken.value?.isCancelled && uploadCancelToken.value?.keys?.length > 0) {
+        console.log('上传已取消，准备清理文件')
+        await Service.postCosBatchDelete({
+          data: {
+            keys: uploadCancelToken.value.keys,
+          },
+        })
+        console.log('已清理取消上传的文件')
+      }
+      throw error
+    }
+
+    // 如果已取消上传，则不继续处理
+    if (uploadCancelToken.value?.isCancelled) {
+      return
+    }
 
     // 过滤出成功上传的文件
-    const successResults = uploadResults.filter((item) => !item.error) as dto_AlbumMediaAddDTO[]
+    const successResults = uploadResults.filter((item) => !('error' in item)) as UploadItem[]
     // 过滤出失败的文件
-    const failedResults = uploadResults.filter((item) => item.error) as {
-      error: Error
-      key: string
-    }[]
+    const failedResults = uploadResults.filter((item) => 'error' in item) as UploadError[]
 
     // 如果有成功上传的文件，保存到数据库
     if (successResults.length > 0) {
@@ -726,7 +908,7 @@ const handleUploadWithSizeType = async (sizeType: 'original' | 'compressed') => 
         const saveRes = (await Service.postAlbumMedia({
           body: {
             album_id: albumId.value,
-            medias: successResults,
+            medias: successResults.map(({ key, ...rest }) => rest), // 移除key属性
           },
         })) as unknown as ApiResponse<null>
 
@@ -762,13 +944,24 @@ const handleUploadWithSizeType = async (sizeType: 'original' | 'compressed') => 
 
     // 如果有失败的文件，清理已上传的 COS 对象
     if (failedResults.length > 0) {
-      const keys = failedResults.map((item) => item.key)
-      await Service.postCosBatchDelete({
-        data: {
-          keys,
-        },
-      })
-      throw new Error('部分文件上传失败')
+      const keys = failedResults.map((item) => item.key).filter(Boolean)
+      if (keys.length > 0) {
+        await Service.postCosBatchDelete({
+          data: {
+            keys,
+          },
+        })
+      }
+
+      if (successResults.length === 0) {
+        throw new Error('所有文件上传失败')
+      } else {
+        uni.showToast({
+          title: `部分文件上传失败(${failedResults.length}个)`,
+          icon: 'none',
+          duration: 3000,
+        })
+      }
     }
   } catch (error) {
     console.error('上传失败:', error)
@@ -782,6 +975,9 @@ const handleUploadWithSizeType = async (sizeType: 'original' | 'compressed') => 
       duration: 3000,
     })
   } finally {
+    // 重置上传状态
+    isUploading.value = false
+    uploadCancelToken.value = null
     uni.hideLoading()
   }
 }
@@ -826,7 +1022,7 @@ const saveTitle = async () => {
   }
 
   try {
-    const res = await Service.postAlbum({
+    const res = (await Service.postAlbum({
       body: {
         id: albumId.value,
         name: editingTitle.value,
@@ -834,7 +1030,7 @@ const saveTitle = async () => {
         start_time: albumInfo.value.start_time,
         cover_img: albumInfo.value.cover_img,
       },
-    })
+    })) as unknown as ApiResponse<any>
 
     if (res.code === 0) {
       albumInfo.value.name = editingTitle.value
@@ -867,7 +1063,7 @@ const startEditDescription = () => {
 // 保存描述
 const saveDescription = async () => {
   try {
-    const res = await Service.postAlbum({
+    const res = (await Service.postAlbum({
       body: {
         id: albumId.value,
         name: albumInfo.value.name,
@@ -875,7 +1071,7 @@ const saveDescription = async () => {
         description: editingDescription.value,
         start_time: albumInfo.value.start_time,
       },
-    })
+    })) as unknown as ApiResponse<any>
 
     if (res.code === 0) {
       albumInfo.value.description = editingDescription.value
@@ -912,6 +1108,106 @@ const handleImageLoad = (e: any, media: MediaItem) => {
   console.log('图片加载成功:', media.url)
   imageLoadStatus.value[media.id] = true
 }
+
+// 取消上传
+const cancelUpload = async () => {
+  if (!isUploading.value) return
+
+  try {
+    console.log('开始取消上传...')
+
+    // 设置取消状态
+    if (uploadCancelToken.value) {
+      uploadCancelToken.value.isCancelled = true
+
+      // 中止所有正在进行的上传请求
+      uploadCancelToken.value.abortControllers.forEach((controller) => {
+        try {
+          controller.abort()
+        } catch (e) {
+          console.error('中止上传请求失败:', e)
+        }
+      })
+    }
+
+    // 如果有已上传的文件，清理它们
+    if (uploadCurrent.value > 0 && uploadCancelToken.value?.keys?.length > 0) {
+      console.log('正在清理已上传的文件:', uploadCancelToken.value.keys)
+      await Service.postCosBatchDelete({
+        data: {
+          keys: uploadCancelToken.value.keys,
+        },
+      })
+      console.log('已清理上传的文件')
+    }
+
+    // 重置上传状态
+    isUploading.value = false
+    uploadProgress.value = 0
+    uploadTotal.value = 0
+    uploadCurrent.value = 0
+    uploadCancelToken.value = {
+      isCancelled: false,
+      keys: [],
+      abortControllers: [],
+    }
+
+    uni.showToast({
+      title: '已取消上传',
+      icon: 'none',
+    })
+  } catch (error) {
+    console.error('取消上传失败:', error)
+    uni.showToast({
+      title: '取消上传失败',
+      icon: 'none',
+    })
+  }
+}
+
+const drawCircle = (progress: number) => {
+  const ctx = uni.createCanvasContext('progressCanvas', this)
+  const canvasSize = 120 // 与样式中定义的大小一致
+  const centerX = canvasSize / 2
+  const centerY = canvasSize / 2
+  const radius = Math.min(centerX, centerY) - 10 // 留出边距
+  const lineWidth = 6
+
+  // 清空画布
+  ctx.clearRect(0, 0, canvasSize, canvasSize)
+
+  // 绘制底圆
+  ctx.beginPath()
+  ctx.arc(centerX, centerY, radius, 0, Math.PI * 2)
+  ctx.setStrokeStyle('#f1f1f1')
+  ctx.setLineWidth(lineWidth)
+  ctx.stroke()
+
+  // 绘制进度
+  if (progress > 0) {
+    ctx.beginPath()
+    ctx.arc(centerX, centerY, radius, -Math.PI / 2, -Math.PI / 2 + (progress / 100) * Math.PI * 2)
+    ctx.setStrokeStyle('#2e86de')
+    ctx.setLineWidth(lineWidth)
+    ctx.stroke()
+  }
+
+  // 绘制到画布
+  ctx.draw()
+}
+
+// 监听进度变化
+watch(
+  () => uploadProgress.value,
+  (newVal) => {
+    drawCircle(newVal)
+  },
+)
+
+// 在 onMounted 中初始化
+onMounted(() => {
+  drawCircle(uploadProgress.value)
+})
 
 usePageAuth()
 </script>
@@ -1492,5 +1788,98 @@ usePageAuth()
 .delete-btn {
   background-color: #f44336;
   color: white;
+}
+
+/* 上传进度样式 */
+.upload-progress-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.7);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 9999;
+  backdrop-filter: blur(5px);
+}
+
+.upload-progress-container {
+  width: 80%;
+  max-width: 600rpx;
+  background: rgba(255, 255, 255, 0.95);
+  border-radius: 24rpx;
+  padding: 40rpx;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  box-shadow: 0 10rpx 40rpx rgba(0, 0, 0, 0.2);
+  animation: fadeIn 0.3s ease-out;
+}
+
+.progress-circle-container {
+  position: relative;
+  width: 120px;
+  height: 120px;
+  margin-bottom: 30rpx;
+}
+
+.progress-canvas {
+  width: 120px;
+  height: 120px;
+}
+
+.progress-text {
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
+  text-align: center;
+  z-index: 2;
+
+  .progress-number {
+    font-size: 32rpx;
+    font-weight: 600;
+    color: #333;
+  }
+}
+
+.upload-status-text {
+  font-size: 32rpx;
+  color: #333;
+  margin-bottom: 40rpx;
+  text-align: center;
+}
+
+.cancel-upload-btn {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10rpx;
+  padding: 20rpx 40rpx;
+  background: linear-gradient(135deg, #ff4757, #ff6b81);
+  color: #fff;
+  border-radius: 40rpx;
+  font-size: 28rpx;
+  border: none;
+  box-shadow: 0 6rpx 16rpx rgba(255, 71, 87, 0.3);
+  transition: all 0.3s ease;
+
+  &:active {
+    transform: scale(0.95);
+    box-shadow: 0 3rpx 8rpx rgba(255, 71, 87, 0.3);
+  }
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(20rpx);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
 }
 </style>
