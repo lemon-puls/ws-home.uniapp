@@ -1321,7 +1321,7 @@ usePageAuth()
             border: 4rpx solid #de2e2e;
             border-radius: 16rpx;
             box-shadow: 0 0 20rpx rgba(46, 134, 222, 0.3);
-            z-index: 1;
+            z-index: 5;
           }
         }
 
@@ -1384,6 +1384,7 @@ usePageAuth()
           justify-content: center;
           opacity: 0;
           transition: opacity 0.3s ease;
+          z-index: 4;
 
           .view-more {
             color: #fff;
