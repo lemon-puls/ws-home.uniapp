@@ -38,38 +38,45 @@
 ## 📦 安装
 
 ```bash
-# 克隆项目
+# 1. 克隆项目
 git clone git@github.com:lemon-puls/ws-home.uniapp.git
 
-# 进入项目目录
+# 2. 进入项目目录
 cd ws-home.uniapp
 
-# 安装依赖
+# 3. 安装依赖
 pnpm install
 
-# 启动开发服务器
+# 4. 复制一份配置文件目录 env.sample 为 env 修改其中的配置，一般主要需要修改 .env 文件中 VITE_SERVER_BASEURL（后端请求地址） 配置即可，如果是小程序的话，注意要填写 appId
+
+# 5. 启动（推荐直接使用 HBuilderX 运行或发布，会更方便）
 pnpm dev:h5  # 开发 H5 版本
 pnpm dev:mp-weixin  # 开发微信小程序版本
 pnpm dev:app  # 开发 App 版本
-```
 
-## 🚀 开发
-
-```bash
-# 开发 H5 版本
-pnpm dev:h5
-
-# 开发微信小程序版本
-pnpm dev:mp-weixin
-
-# 开发 App 版本
-pnpm dev:app
-
-# 构建生产版本
 pnpm build:h5  # 构建 H5 版本
 pnpm build:mp-weixin  # 构建微信小程序版本
 pnpm build:app  # 构建 App 版本
 ```
+
+## 🚀 开发
+
+步骤基本和【安装】的说明一致，需要特别说明的是，本项目接入了 openapi 用于直接根据后端接口文档生成 api 代码，极大程度上方便了在前端业务代码中对接口的调用。所以若设计到接口的改动，开发步骤如下：
+
+1. 后端接口完成修改后，启动后端
+2. 在前端运行以下命令生成 api 代码，生成的代码在 src/api 目录下
+
+```bash
+pnpm run generate:api
+```
+
+3. 修改 src/api/core/request.ts 文件，确保使用 uni.request 发请求
+
+   由于上一步使用 openapi 生成的代码是使用 axios 发请求的，这在小程序等平台下使用是不兼容的，所以需要修改为使用 uni.request 发请求，当前项目中 src/api/core/request.ts 已经是修改好了的，重新生成代码后当前的 request.ts 会被覆盖，可以使用当前的再覆盖回去新生成的即可。
+
+4. 更改 src/api/core/OpenAPI.ts 文件，确保配置文件中配置的接口 base url 生效
+
+   需要把该文件中的 OpenAPI 对象的 BASE 字段留空，否则会覆盖掉 .env 文件中配置的接口地址。
 
 ## 📁 项目结构
 
@@ -102,9 +109,9 @@ pnpm build:app  # 构建 App 版本
 ## 🤝 贡献指南
 
 1. Fork 本仓库
-2. 创建你的特性分支 (`git checkout -b feature/AmazingFeature`)
+2. 创建你的特性分支 (`git checkout -b feat/AmazingFeature`)
 3. 提交你的更改 (`git commit -m 'Add some AmazingFeature'`)
-4. 推送到分支 (`git push origin feature/AmazingFeature`)
+4. 推送到分支 (`git push origin feat/AmazingFeature`)
 5. 开启一个 Pull Request
 
 感谢所有为本项目做出贡献的开发者！
